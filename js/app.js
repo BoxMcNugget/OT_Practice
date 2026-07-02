@@ -66,7 +66,13 @@ window.Praxis = window.Praxis || {};
     home: '<path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/>',
     target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.6"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>',
     ext: '<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
-    school: '<path d="M12 4l9 4-9 4-9-4z"/><path d="M6 10v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/>'
+    school: '<path d="M12 4l9 4-9 4-9-4z"/><path d="M6 10v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/>',
+    chart: '<path d="M5 20V4"/><path d="M5 20h15"/><path d="M9 20v-6M13 20v-10M17 20v-4"/>',
+    x: '<path d="M6 6l12 12M18 6L6 18"/>',
+    chevUp: '<path d="M6 15l6-6 6 6"/>',
+    pulse: '<path d="M3 12h4l2 6 4-14 2 8h6"/>',
+    minus: '<path d="M6 12h12"/>'
   };
 
   P.icon = function (name, size) {
@@ -167,6 +173,35 @@ window.Praxis = window.Praxis || {};
     return touched ? learned / all.length : null;
   };
 
+  /* ---- question answer tracking (powers analytics, review, adaptive) ---- */
+  P.stats = function () {
+    return P.progress.stats || (P.progress.stats = { byDomain: {}, answered: {}, totalSeen: 0, totalCorrect: 0 });
+  };
+  // records the most recent outcome per question id
+  P.recordAnswer = function (q, correct) {
+    var s = P.stats();
+    var d = q.domain || "Other";
+    var bd = s.byDomain[d] || (s.byDomain[d] = { seen: 0, correct: 0 });
+    var prev = s.answered[q.id];
+    // adjust running totals so re-answering a question doesn't double-count
+    if (prev) {
+      bd.seen = Math.max(0, bd.seen - 1); if (prev.correct) bd.correct = Math.max(0, bd.correct - 1);
+      s.totalSeen = Math.max(0, s.totalSeen - 1); if (prev.correct) s.totalCorrect = Math.max(0, s.totalCorrect - 1);
+    }
+    bd.seen++; if (correct) bd.correct++;
+    s.totalSeen++; if (correct) s.totalCorrect++;
+    s.answered[q.id] = { correct: !!correct, ts: Date.now() };
+    P.save();
+  };
+  P.missedQuestions = function () {
+    var s = P.progress.stats;
+    if (!s || !s.answered) return [];
+    return (window.PRAXIS_QUESTIONS || []).filter(function (q) {
+      var a = s.answered[q.id];
+      return a && a.correct === false;
+    });
+  };
+
   // "progress" blends the study activities that have data
   P.computeReadiness = function () {
     var parts = [];
@@ -179,8 +214,8 @@ window.Praxis = window.Praxis || {};
       var coverage = doneCount / totalCases;
       parts.push(0.55 * accuracy + 0.45 * coverage);
     }
-    var qs = P.progress.questions;
-    if (qs && qs.answered) parts.push(qs.correct / qs.answered);
+    var st = P.progress.stats;
+    if (st && st.totalSeen) parts.push(st.totalCorrect / st.totalSeen);
     var frac = P.cardsLearnedFraction();
     if (frac !== null) parts.push(frac);
     if (!parts.length) return 0;
@@ -211,6 +246,14 @@ window.Praxis = window.Praxis || {};
       P.modes.review.renderNotes(parts[1], app);
     } else if (parts[0] === "review") {
       P.modes.review.renderList(app);
+    } else if (parts[0] === "progress") {
+      renderProgress(app);
+    } else if (parts[0] === "exam") {
+      P.modes.exam.render(app);
+    } else if (parts[0] === "sims" && parts[1]) {
+      P.modes.sims.renderSim(parts[1], app);
+    } else if (parts[0] === "sims") {
+      P.modes.sims.renderList(app);
     } else if (parts[0] === "sources") {
       renderSources(app);
     } else {
@@ -272,7 +315,7 @@ window.Praxis = window.Praxis || {};
           '<h1 class="hero-greet">' + greeting() + '</h1>' +
           '<p class="hero-line">' + heroLine(readiness) + '</p>' +
         '</div>' +
-        '<div class="ring-wrap">' + ringSVG(readiness) + '<p class="ring-label">progress</p></div>' +
+        '<a class="ring-wrap" href="#/progress" aria-label="View your progress and weak areas">' + ringSVG(readiness) + '<p class="ring-label">progress</p></a>' +
       '</section>' +
 
       '<div class="encourage">' + P.icon("spark", 20) +
@@ -289,6 +332,15 @@ window.Praxis = window.Praxis || {};
         '<span class="btn-solid" aria-hidden="true">' + (target && target.resume ? "Resume" : "Begin") + '</span>' +
       '</button>' +
 
+      '<button class="exam-cta" id="exam-cta">' +
+        '<span class="exam-cta-ic">' + P.icon("target", 22) + '</span>' +
+        '<span class="exam-cta-body">' +
+          '<span class="exam-cta-ttl">Take a mock exam</span>' +
+          '<span class="exam-cta-sub">Timed, exam-style, with a scaled-score estimate</span>' +
+        '</span>' +
+        '<span class="exam-cta-go">' + P.icon("right", 18) + '</span>' +
+      '</button>' +
+
       '<p class="grid-title">Ways to study</p>' +
       '<div class="modes">' +
         tile("blue", "userHeart", "Patient cases", "Work a real scenario, step by step",
@@ -297,11 +349,21 @@ window.Praxis = window.Praxis || {};
              questionsMeta(), "#/questions", false) +
         tile("green", "cards", "Flashcards", "Spaced repetition on key concepts",
              flashcardsMeta(), "#/flashcards", false) +
-        tile("amber", "book", "Domain review", "Focused notes by the 4 exam domains",
-             P.icon("book", 15) + " " + ((window.PRAXIS_NOTES || []).length) + " domains", "#/review", false) +
+        tile("amber", "book", "Domain review", "Domain notes plus quick reference",
+             P.icon("book", 15) + " " + ((window.PRAXIS_NOTES || []).length) + " topics", "#/review", false) +
       '</div>' +
 
+      '<button class="sim-tile" id="sim-tile">' +
+        '<span class="sim-tile-ic">' + P.icon("pulse", 24) + '</span>' +
+        '<span class="sim-tile-body">' +
+          '<span class="sim-tile-ttl">Clinical simulations</span>' +
+          '<span class="sim-tile-sub">Choose your actions from a full list — the exam\'s simulation format</span>' +
+        '</span>' +
+        '<span class="sim-tile-meta">' + ((window.PRAXIS_SIMS || []).length) + ' sims ' + P.icon("right", 16) + '</span>' +
+      '</button>' +
+
       '<p class="foot-note">' + footNote() +
+        ' · <a href="#/progress">Progress</a>' +
         ' · <a href="#/sources">Sources</a>' +
         ' · <a href="#" id="about-content">about the content</a></p>';
 
@@ -312,6 +374,10 @@ window.Praxis = window.Praxis || {};
       if (target) P.go("#/cases/" + target.c.id);
       else P.go("#/cases");
     });
+    var examCta = document.getElementById("exam-cta");
+    if (examCta) examCta.addEventListener("click", function () { P.go("#/exam"); });
+    var simTile = document.getElementById("sim-tile");
+    if (simTile) simTile.addEventListener("click", function () { P.go("#/sims"); });
     Array.prototype.forEach.call(view.querySelectorAll(".tile"), function (btn) {
       btn.addEventListener("click", function () {
         var soon = btn.getAttribute("data-soon") === "1";
@@ -342,9 +408,9 @@ window.Praxis = window.Praxis || {};
   }
 
   function questionsMeta() {
-    var qs = P.progress.questions;
-    if (qs && qs.answered) {
-      return P.icon("target", 15) + " " + Math.round(100 * qs.correct / qs.answered) + "% avg · " + qs.answered + " done";
+    var st = P.progress.stats;
+    if (st && st.totalSeen) {
+      return P.icon("target", 15) + " " + Math.round(100 * st.totalCorrect / st.totalSeen) + "% avg · " + st.totalSeen + " done";
     }
     return P.icon("target", 15) + " a quick recall quiz";
   }
@@ -391,6 +457,79 @@ window.Praxis = window.Praxis || {};
       '<span class="tile-sub">' + esc(sub) + '</span>' +
       '<span class="tile-meta">' + meta + '</span>' +
       '</button>';
+  }
+
+  /* ---- progress / analytics page ---- */
+  var Q_DOMAINS = ["Evaluation & assessment", "Analysis & planning", "Intervention", "Competency & ethics"];
+
+  function renderProgress(app) {
+    var s = P.progress.stats;
+    var view = document.createElement("div");
+    view.className = "view";
+
+    if (!s || !s.totalSeen) {
+      view.innerHTML =
+        P.subhead("Progress", "Your strengths and what to focus on", "#/") +
+        '<div class="empty-state">' + P.icon("target", 30) +
+          '<p>Answer some practice questions and this page will show how you\'re doing in each exam domain — plus anything worth revisiting.</p>' +
+          '<button class="btn-solid" id="go-q">' + P.icon("play", 18) + " Start practicing</button>" +
+        "</div>";
+      app.appendChild(view);
+      P.wireBack(view);
+      var g = view.querySelector("#go-q");
+      if (g) g.addEventListener("click", function () { P.go("#/questions"); });
+      return;
+    }
+
+    var domains = Q_DOMAINS.slice();
+    Object.keys(s.byDomain).forEach(function (d) { if (domains.indexOf(d) < 0) domains.push(d); });
+
+    var overallPct = Math.round(100 * s.totalCorrect / s.totalSeen);
+    var missed = P.missedQuestions().length;
+
+    var weakest = null;
+    domains.forEach(function (d) {
+      var bd = s.byDomain[d];
+      if (!bd || !bd.seen) return;
+      var acc = bd.correct / bd.seen;
+      if (!weakest || acc < weakest.acc) weakest = { d: d, acc: acc };
+    });
+
+    var bars = domains.map(function (d) {
+      var bd = s.byDomain[d] || { seen: 0, correct: 0 };
+      var pct = bd.seen ? Math.round(100 * bd.correct / bd.seen) : 0;
+      return '<div class="dom-row">' +
+        '<div class="dom-top"><span class="dom-name">' + esc(d) + "</span>" +
+          '<span class="dom-pct">' + (bd.seen ? pct + "%" : "—") + "</span></div>" +
+        '<div class="dom-bar"><div class="dom-fill" style="width:0" data-pct="' + (bd.seen ? pct : 0) + '"></div></div>' +
+        '<div class="dom-sub">' + (bd.seen ? bd.correct + " of " + bd.seen + " correct" : "not practiced yet") + "</div>" +
+      "</div>";
+    }).join("");
+
+    view.innerHTML =
+      P.subhead("Progress", "Your strengths and what to focus on", "#/") +
+      '<div class="stat-cards">' +
+        '<div class="metric"><div class="metric-num">' + overallPct + '%</div><div class="metric-lbl">overall accuracy</div></div>' +
+        '<div class="metric"><div class="metric-num">' + s.totalSeen + '</div><div class="metric-lbl">questions answered</div></div>' +
+        '<div class="metric"><div class="metric-num">' + missed + '</div><div class="metric-lbl">to review</div></div>' +
+      "</div>" +
+      (weakest && weakest.acc < 0.85 ? '<div class="focus-note">' + P.icon("target", 16) +
+        " <span>Focus area: <strong>" + esc(weakest.d) + "</strong> — a good place to spend your next session.</span></div>" : "") +
+      '<p class="pills-label" style="margin-top:22px">By exam domain</p>' +
+      '<div class="dom-list">' + bars + "</div>" +
+      (missed ? '<button class="btn-solid block-btn" id="review-missed" style="margin-top:10px">' +
+        P.icon("refresh", 18) + " Review " + missed + " missed question" + (missed === 1 ? "" : "s") + "</button>" : "") +
+      '<p class="mode-foot">' + P.icon("info", 14) + " Accuracy reflects your most recent answer on each question.</p>";
+
+    app.appendChild(view);
+    P.wireBack(view);
+    var rm = view.querySelector("#review-missed");
+    if (rm) rm.addEventListener("click", function () { P.modes.questions.reviewMissed(app); });
+    requestAnimationFrame(function () {
+      Array.prototype.forEach.call(view.querySelectorAll(".dom-fill"), function (f) {
+        f.style.width = f.getAttribute("data-pct") + "%";
+      });
+    });
   }
 
   /* ---- sources page ---- */

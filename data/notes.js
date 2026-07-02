@@ -133,5 +133,99 @@ window.PRAXIS_NOTES = [
         ]
       }
     ]
+  },
+
+  /* ================= QUICK REFERENCE ================= */
+  {
+    key: "ref-assess",
+    title: "Assessments at a glance",
+    blurb: "What the common tools measure — a quick reference.",
+    sections: [
+      {
+        heading: "Occupation & independence",
+        points: [
+          "COPM — client-rated performance and satisfaction with chosen activities; sensitive to change.",
+          "FIM — level of assistance across ADLs, mobility, and cognition.",
+          "Barthel Index — independence in basic ADLs.",
+          "Role Checklist — the roles a person values and performs."
+        ]
+      },
+      {
+        heading: "Body functions",
+        points: [
+          "Goniometry — joint range of motion (in degrees).",
+          "Manual muscle testing (MMT) — muscle strength on a 0–5 scale.",
+          "Grip dynamometer — grip strength.",
+          "Semmes-Weinstein monofilaments — light-touch and protective sensation."
+        ]
+      },
+      {
+        heading: "Cognition, balance & fine motor",
+        points: [
+          "MoCA and MMSE — cognitive screening (attention, memory, executive function).",
+          "Allen Cognitive Level Screen — cognitive level and functional implications.",
+          "Berg Balance Scale — balance and fall risk.",
+          "9-Hole Peg Test — fine motor dexterity and coordination."
+        ]
+      }
+    ]
+  },
+  {
+    key: "ref-for",
+    title: "Frames of reference & models",
+    blurb: "The lenses that guide evaluation and intervention.",
+    sections: [
+      {
+        heading: "Occupation-based models",
+        points: [
+          "MOHO (Model of Human Occupation) — volition, habituation, and performance capacity shape occupation.",
+          "PEO / CMOP — occupation emerges from the fit among person, environment, and occupation."
+        ]
+      },
+      {
+        heading: "Restoring vs. compensating",
+        points: [
+          "Biomechanical — restore strength, range of motion, and endurance in physical dysfunction.",
+          "Rehabilitative — compensate and adapt (equipment, techniques, environment) to regain independence.",
+          "Motor learning / task-oriented — practice meaningful tasks to promote recovery after neurological injury."
+        ]
+      },
+      {
+        heading: "Population-specific",
+        points: [
+          "Sensory integration — supports sensory processing and regulation, often in pediatrics.",
+          "Cognitive and behavioral approaches — coping, routines, and skill-building in mental health."
+        ]
+      }
+    ]
+  },
+  {
+    key: "ref-precautions",
+    title: "Precautions & safety",
+    blurb: "High-yield precautions to keep clients safe.",
+    sections: [
+      {
+        heading: "Orthopedic & cardiac",
+        points: [
+          "Posterior hip precautions — no hip flexion past 90°, no adduction past midline, no internal rotation.",
+          "Sternal precautions (after cardiac surgery) — avoid heavy lifting, pushing, and pulling; protect the healing sternum.",
+          "After joint replacement — safe transfers and long-handled equipment to avoid excessive bending."
+        ]
+      },
+      {
+        heading: "Neurological",
+        points: [
+          "Autonomic dysreflexia (SCI, usually T6 and above) — sudden high blood pressure and pounding headache: sit the person upright, find and remove the trigger (often a full bladder), and get help. It's an emergency.",
+          "Impaired sensation — schedule pressure-relief weight shifts and regular skin checks to prevent pressure injuries."
+        ]
+      },
+      {
+        heading: "General safety",
+        points: [
+          "Fall prevention — remove trip hazards, improve lighting, add grab bars and non-slip surfaces.",
+          "Watch for acute changes in status (new confusion, shortness of breath, chest pain) — these come before the planned session."
+        ]
+      }
+    ]
   }
 ];

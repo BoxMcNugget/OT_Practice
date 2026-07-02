@@ -8,8 +8,11 @@ window.Praxis.modes = window.Praxis.modes || {};
   "use strict";
   var M = {};
   var DOMAINS = ["Evaluation & assessment", "Analysis & planning", "Intervention", "Competency & ethics"];
+  var LEVELS = ["Core", "Challenge", "Mixed"];
   var SESSION_SIZE = 10;
   var selected = "All domains";
+  var selectedLevel = "Mixed";
+  function levelOf(q) { return q.difficulty || "Core"; }
 
   function esc(s) { return P.esc(s); }
   function shuffle(arr) {
@@ -21,9 +24,55 @@ window.Praxis.modes = window.Praxis.modes || {};
     if (a.length !== b.length) return false;
     return a.slice().sort().join(",") === b.slice().sort().join(",");
   }
-  function poolFor(domain) {
+
+  // per-distractor rationale breakdown, shown after answering (if authored)
+  function whyHTML(q) {
+    var whys = (window.PRAXIS_WHYS || {})[q.id];
+    if (!whys) return "";
+    var rows = q.options.map(function (o) {
+      var correct = q.correct.indexOf(o.id) >= 0;
+      var w = whys[o.id] || "";
+      return '<li class="why-row ' + (correct ? "ok" : "no") + '">' +
+        '<span class="why-ic">' + P.icon(correct ? "check" : "minus", 13) + "</span>" +
+        '<span class="why-text"><strong>' + esc(o.text) + "</strong>" + (w ? " — " + esc(w) : "") + "</span></li>";
+    }).join("");
+    return '<div class="why-list"><p class="why-title">Why each option</p><ul>' + rows + "</ul></div>";
+  }
+  function poolFor(domain, level) {
     var all = window.PRAXIS_QUESTIONS || [];
-    return domain === "All domains" ? all.slice() : all.filter(function (q) { return q.domain === domain; });
+    return all.filter(function (q) {
+      var domOk = domain === "All domains" || q.domain === domain;
+      var lvlOk = level === "Mixed" || levelOf(q) === level;
+      return domOk && lvlOk;
+    });
+  }
+
+  // weights a session toward missed questions, then weakest domains, then fresh ones
+  function buildAdaptivePool(level, size) {
+    var all = window.PRAXIS_QUESTIONS || [];
+    var byLevel = function (q) { return level === "Mixed" || levelOf(q) === level; };
+    var candidates = all.filter(byLevel);
+    var stats = P.progress.stats;
+    var chosen = [], used = {};
+    function add(q) { if (!used[q.id]) { used[q.id] = 1; chosen.push(q); } }
+
+    // 1) questions previously missed
+    var missed = (P.missedQuestions ? P.missedQuestions() : []).filter(byLevel);
+    shuffle(missed).forEach(function (q) { if (chosen.length < size) add(q); });
+
+    // 2) questions from the weakest-scoring domains
+    if (stats && stats.byDomain) {
+      var doms = Object.keys(stats.byDomain).filter(function (d) { return stats.byDomain[d].seen; });
+      doms.sort(function (a, b) {
+        return (stats.byDomain[a].correct / stats.byDomain[a].seen) - (stats.byDomain[b].correct / stats.byDomain[b].seen);
+      });
+      doms.forEach(function (d) {
+        shuffle(candidates.filter(function (q) { return q.domain === d; })).forEach(function (q) { if (chosen.length < size) add(q); });
+      });
+    }
+    // 3) fill with anything else
+    shuffle(candidates).forEach(function (q) { if (chosen.length < size) add(q); });
+    return shuffle(chosen).slice(0, size);
   }
 
   /* -------- start screen -------- */
@@ -33,14 +82,23 @@ window.Praxis.modes = window.Praxis.modes || {};
     var pills = ["All domains"].concat(DOMAINS).map(function (d) {
       return '<button class="pill' + (d === selected ? " active" : "") + '" data-d="' + esc(d) + '">' + esc(d) + "</button>";
     }).join("");
-    var n = Math.min(SESSION_SIZE, poolFor(selected).length);
+    var levelPills = LEVELS.map(function (l) {
+      return '<button class="pill' + (l === selectedLevel ? " active" : "") + '" data-l="' + esc(l) + '">' + esc(l) + "</button>";
+    }).join("");
+    var avail = poolFor(selected, selectedLevel).length;
+    var n = Math.min(SESSION_SIZE, avail);
 
     view.innerHTML =
       P.subhead("Practice questions", "Quick questions with instant, encouraging feedback", "#/") +
-      '<p class="mode-intro">Pick a focus, then begin. You\'ll get ' + n + " question" + (n === 1 ? "" : "s") +
+      '<p class="mode-intro">Pick a focus and a level, then begin. You\'ll get ' + n + " question" + (n === 1 ? "" : "s") +
         ", one at a time, each with a gentle explanation afterward.</p>" +
+      '<p class="pills-label">Level</p><div class="pills" id="qlevels">' + levelPills + "</div>" +
+      '<p class="level-note">' + levelBlurb(selectedLevel) + "</p>" +
       '<p class="pills-label">Focus</p><div class="pills" id="qpills">' + pills + "</div>" +
-      '<button class="btn-solid block-btn" id="qstart">' + P.icon("play", 18) + " Start practice</button>" +
+      '<button class="btn-solid block-btn" id="qstart"' + (n === 0 ? " disabled" : "") + ">" +
+        P.icon("play", 18) + " Start practice</button>" +
+      '<button class="btn-ghost block-btn" id="qsmart" style="margin-top:10px">' +
+        P.icon("target", 18) + " Smart practice · focus on your weak spots</button>" +
       '<p class="mode-foot">' + P.icon("info", 14) + ' Practice content is a draft — <a href="#/sources">see sources</a>.</p>';
 
     app.appendChild(view);
@@ -48,10 +106,37 @@ window.Praxis.modes = window.Praxis.modes || {};
     Array.prototype.forEach.call(view.querySelectorAll("#qpills .pill"), function (b) {
       b.addEventListener("click", function () { selected = b.getAttribute("data-d"); app.innerHTML = ""; M.render(app); });
     });
+    Array.prototype.forEach.call(view.querySelectorAll("#qlevels .pill"), function (b) {
+      b.addEventListener("click", function () { selectedLevel = b.getAttribute("data-l"); app.innerHTML = ""; M.render(app); });
+    });
     view.querySelector("#qstart").addEventListener("click", function () {
-      var pool = shuffle(poolFor(selected)).slice(0, SESSION_SIZE);
+      var pool = shuffle(poolFor(selected, selectedLevel)).slice(0, SESSION_SIZE);
+      if (!pool.length) return;
       renderQ(app, { pool: pool, i: 0, correct: 0, touched: false });
     });
+    view.querySelector("#qsmart").addEventListener("click", function () {
+      var pool = buildAdaptivePool(selectedLevel, SESSION_SIZE);
+      if (!pool.length) { P.toast("Add a few answers first, then Smart practice can target your weak spots."); return; }
+      renderQ(app, { pool: pool, i: 0, correct: 0, touched: false });
+    });
+  };
+
+  function levelBlurb(level) {
+    if (level === "Core") return "Core — build the fundamentals with clear, foundational questions.";
+    if (level === "Challenge") return "Challenge — exam-style questions where every option looks reasonable and you pick the best.";
+    return "Mixed — a blend of Core and Challenge questions.";
+  }
+
+  /* -------- review only the questions she's missed -------- */
+  M.reviewMissed = function (app) {
+    var missed = P.missedQuestions ? P.missedQuestions() : [];
+    if (!missed.length) {
+      P.toast("Nothing to review right now — nice work!");
+      P.go("#/progress");
+      return;
+    }
+    var pool = shuffle(missed).slice(0, 20);
+    renderQ(app, { pool: pool, i: 0, correct: 0, touched: false });
   };
 
   /* -------- one question -------- */
@@ -72,7 +157,8 @@ window.Praxis.modes = window.Praxis.modes || {};
     view.innerHTML =
       P.subhead("Practice questions", q.domain, "#/questions") +
       '<div class="progress-rail"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
-      '<p class="progress-text">Question ' + (s.i + 1) + " of " + s.pool.length + "</p>" +
+      '<p class="progress-text">Question ' + (s.i + 1) + " of " + s.pool.length +
+        (levelOf(q) === "Challenge" ? ' <span class="level-badge challenge">Challenge</span>' : "") + "</p>" +
       '<p class="q-prompt">' + esc(q.prompt) + "</p>" +
       '<p class="q-hint">' + P.icon("info", 15) + " " + selectLabel + "</p>" +
       '<div class="options" id="opts">' + opts + "</div>" +
@@ -116,6 +202,7 @@ window.Praxis.modes = window.Praxis.modes || {};
         revealed = true;
         var isBest = setsEqual(selection, q.correct);
         if (isBest) s.correct++;
+        P.recordAnswer(q, isBest);
         if (!s.touched) { s.touched = true; P.touchStreak(); }
         Array.prototype.forEach.call(optsWrap.querySelectorAll(".opt"), function (btn) {
           var oid = btn.getAttribute("data-oid");
@@ -133,6 +220,7 @@ window.Praxis.modes = window.Praxis.modes || {};
             '<p class="feedback-head">' + P.icon(isBest ? "check" : "bulb", 18) + " " + esc(head) + "</p>" +
             '<p class="feedback-body">' + esc(lead) + "<br><br>" + q.rationale + "</p>" +
             (q.teach ? '<p class="feedback-teach">' + P.icon("bulb", 15) + " " + esc(q.teach) + "</p>" : "") +
+            whyHTML(q) +
           "</div>";
         slot.querySelector(".feedback").scrollIntoView({ behavior: "smooth", block: "center" });
         var last = s.i === s.pool.length - 1;
@@ -146,11 +234,7 @@ window.Praxis.modes = window.Praxis.modes || {};
 
   /* -------- results -------- */
   function finish(app, s) {
-    var qs = P.qStats();
-    qs.answered += s.pool.length;
-    qs.correct += s.correct;
-    P.save();
-
+    // per-question outcomes are recorded live in P.recordAnswer during each reveal
     app.innerHTML = "";
     var view = document.createElement("div");
     view.className = "view";

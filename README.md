@@ -13,23 +13,30 @@ Built with plain HTML, CSS, and JavaScript — no accounts, no server, works on 
 
 | Mode | What it does |
 |------|--------------|
-| **Patient cases** | Work a patient scenario step by step, with supportive feedback and teaching notes |
-| **Practice questions** | Quick quizzes (filter by domain) with instant, kind feedback |
+| **Patient cases** | Work a patient scenario step by step, with supportive feedback |
+| **Practice questions** | Quizzes filtered by domain and difficulty (Core / Challenge), with per-option rationales; plus "Smart practice" that targets your weak spots |
 | **Flashcards** | Spaced repetition — the ones you're still learning come back sooner |
-| **Domain review** | Concise study notes organized by the four exam domains |
+| **Domain review** | Domain notes plus quick-reference topics (assessments, frames of reference, precautions) |
+| **Mock exam** | A timed, blueprint-weighted test with an estimated scaled score and domain breakdown |
+| **Clinical simulations** | The exam's CST format: read a scene, choose actions from a list, scored for helpful vs. harmful judgment |
+| **Progress** | Per-domain mastery, a focus-area suggestion, and "review missed questions" |
 
-All four modes are live. Content by the numbers:
+Content by the numbers:
 
-- **12 patient cases**, two in each of six practice areas: Neurological rehab, Orthopedics,
-  Hand & upper extremity, Pediatrics, Mental health, and Older adults.
-- **20 practice questions** across the four exam domains.
-- **~30 flashcards** with real spaced repetition (Praxis remembers what's due).
-- **4 domains** of review notes.
+- **12 patient cases** across six practice areas (Neuro, Orthopedics, Hand, Pediatrics,
+  Mental health, Older adults).
+- **40 practice questions** (20 Core + 20 Challenge) across the four exam domains, with
+  **per-option rationales** for the Challenge set.
+- **2 clinical simulations** (CST-style), **~30 flashcards**, and **7 review topics**.
 
-Answer options are **shuffled every time** so she reads and reasons rather than memorizing
-positions. A **Sources** page (linked in the footer) lists the real NBCOT/AOTA references.
+Answer options are **shuffled every time**. A **Sources** page (footer) lists the real
+NBCOT/AOTA references.
 
-Progress (streak, completed cases, quiz accuracy, cards due, progress ring) is saved
+> **Exam-fidelity notes:** the mock exam's domain weighting and scaled-score mapping are
+> *approximate study estimates* — verify them against the current official NBCOT content
+> outline. All practice content is draft, pending review by a licensed OT.
+
+Progress (streak, per-domain accuracy, cards due, sim scores, progress ring) is saved
 automatically in the browser.
 
 **Light and dark mode:** there's a sun/moon toggle in the top bar. It follows the device's
@@ -40,17 +47,21 @@ background glows, hover effects, and the shimmer on the "continue" card — resp
 ## Files
 
 ```
-index.html            the page
-css/styles.css        look, feel, and animations
-js/app.js             homepage, navigation, progress tracking
-js/modes/cases.js     the Patient cases mode
-js/modes/questions.js the Practice questions mode
-js/modes/flashcards.js the Flashcards mode (spaced repetition)
-js/modes/review.js    the Domain review mode
-data/cases.js         patient case content   ← edit to add/fix cases
-data/questions.js     practice questions
-data/flashcards.js    flashcards
-data/notes.js         domain review notes
+index.html             the page
+css/styles.css         look, feel, and animations
+js/app.js              homepage, navigation, progress tracking + analytics
+js/modes/cases.js      Patient cases mode
+js/modes/questions.js  Practice questions mode (+ Smart practice)
+js/modes/flashcards.js Flashcards mode (spaced repetition)
+js/modes/review.js     Domain review / reference mode
+js/modes/exam.js       Mock exam mode (timed, scored)
+js/modes/sims.js       Clinical simulations (CST) mode
+data/cases.js          patient case content     ← edit to add/fix cases
+data/questions.js      practice questions
+data/rationales.js     per-option "why each answer" explanations  ← great for an OT to edit
+data/flashcards.js     flashcards
+data/notes.js          domain notes + quick reference
+data/simulations.js    clinical simulation scenarios
 ```
 
 ## Try it locally

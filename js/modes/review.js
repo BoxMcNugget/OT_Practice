@@ -26,7 +26,7 @@ window.Praxis.modes = window.Praxis.modes || {};
     }).join("");
 
     view.innerHTML =
-      P.subhead("Domain review", "Concise notes by the four exam domains", "#/") +
+      P.subhead("Domain review", "Domain notes and quick-reference topics", "#/") +
       '<div class="review-list">' + cards + "</div>" +
       draftNote();
 
