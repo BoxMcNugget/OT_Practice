@@ -474,8 +474,26 @@ window.Praxis = window.Praxis || {};
   }
 
   /* ---- boot ---- */
+  function setupTheme() {
+    var btn = document.getElementById("theme-toggle");
+    if (!btn) return;
+    function sync() {
+      btn.setAttribute("aria-checked",
+        document.documentElement.getAttribute("data-theme") === "dark" ? "true" : "false");
+    }
+    sync();
+    btn.addEventListener("click", function () {
+      var cur = document.documentElement.getAttribute("data-theme");
+      var next = cur === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("praxis.theme", next); } catch (e) {}
+      sync();
+    });
+  }
+
   window.addEventListener("hashchange", route);
   document.addEventListener("DOMContentLoaded", function () {
+    setupTheme();
     paintStreak();
     route();
   });

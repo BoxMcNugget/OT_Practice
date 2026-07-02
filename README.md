@@ -32,6 +32,11 @@ positions. A **Sources** page (linked in the footer) lists the real NBCOT/AOTA r
 Progress (streak, completed cases, quiz accuracy, cards due, progress ring) is saved
 automatically in the browser.
 
+**Light and dark mode:** there's a sun/moon toggle in the top bar. It follows the device's
+system setting by default and remembers the choice. The rest of the flair — the drifting
+background glows, hover effects, and the shimmer on the "continue" card — respects the
+"reduce motion" accessibility setting and calms down automatically if that's turned on.
+
 ## Files
 
 ```
