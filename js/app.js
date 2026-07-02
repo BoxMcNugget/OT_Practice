@@ -87,6 +87,18 @@ window.Praxis = window.Praxis || {};
     t._timer = setTimeout(function () { t.classList.remove("show"); }, 2600);
   };
 
+  // shared sub-view header with a back button (used by every mode)
+  P.subhead = function (title, sub, backHash) {
+    return '<div class="subhead">' +
+      '<button class="back" data-back="' + backHash + '" aria-label="Go back">' + P.icon("left", 20) + "</button>" +
+      '<div><h1 class="subhead-ttl">' + esc(title) + "</h1>" +
+      (sub ? '<p class="subhead-sub">' + esc(sub) + "</p>" : "") + "</div></div>";
+  };
+  P.wireBack = function (view) {
+    var b = view.querySelector(".back");
+    if (b) b.addEventListener("click", function () { P.go(b.getAttribute("data-back")); });
+  };
+
   /* ---- progress store ---- */
   var KEY = "praxis.v1";
   P.progress = loadProgress();
@@ -130,20 +142,50 @@ window.Praxis = window.Praxis || {};
   P.caseProgress = function (id) {
     return P.progress.cases[id] || (P.progress.cases[id] = { step: 0, done: false, firstTry: 0, total: 0 });
   };
-
-  P.computeReadiness = function () {
-    var cases = Object.keys(P.progress.cases).map(function (k) { return P.progress.cases[k]; });
-    var totalCases = (window.PRAXIS_CASES || []).length || 1;
-    if (!cases.length) return 0;
-    var doneCount = 0, firstTry = 0, steps = 0;
-    cases.forEach(function (c) {
-      if (c.done) doneCount++;
-      firstTry += c.firstTry || 0;
-      steps += c.total || 0;
+  P.qStats = function () {
+    return P.progress.questions || (P.progress.questions = { answered: 0, correct: 0 });
+  };
+  P.cardState = function (id) {
+    if (!P.progress.cards) P.progress.cards = {};
+    return P.progress.cards[id] || (P.progress.cards[id] = { level: 0, due: 0 });
+  };
+  P.dueCardCount = function () {
+    var now = Date.now();
+    return (window.PRAXIS_FLASHCARDS || []).filter(function (c) {
+      var st = P.progress.cards && P.progress.cards[c.id];
+      return !st || !st.due || st.due <= now;
+    }).length;
+  };
+  P.cardsLearnedFraction = function () {
+    var all = window.PRAXIS_FLASHCARDS || [];
+    if (!all.length || !P.progress.cards) return null;
+    var learned = 0, touched = 0;
+    all.forEach(function (c) {
+      var st = P.progress.cards[c.id];
+      if (st) { touched++; if ((st.level || 0) >= 2) learned++; }
     });
-    var accuracy = steps ? firstTry / steps : 0;
-    var coverage = doneCount / totalCases;
-    return Math.round(100 * (0.55 * accuracy + 0.45 * coverage));
+    return touched ? learned / all.length : null;
+  };
+
+  // "progress" blends the study activities that have data
+  P.computeReadiness = function () {
+    var parts = [];
+    var cases = Object.keys(P.progress.cases).map(function (k) { return P.progress.cases[k]; });
+    if (cases.length) {
+      var totalCases = (window.PRAXIS_CASES || []).length || 1;
+      var doneCount = 0, firstTry = 0, steps = 0;
+      cases.forEach(function (c) { if (c.done) doneCount++; firstTry += c.firstTry || 0; steps += c.total || 0; });
+      var accuracy = steps ? firstTry / steps : 0;
+      var coverage = doneCount / totalCases;
+      parts.push(0.55 * accuracy + 0.45 * coverage);
+    }
+    var qs = P.progress.questions;
+    if (qs && qs.answered) parts.push(qs.correct / qs.answered);
+    var frac = P.cardsLearnedFraction();
+    if (frac !== null) parts.push(frac);
+    if (!parts.length) return 0;
+    var sum = parts.reduce(function (a, b) { return a + b; }, 0);
+    return Math.round(100 * (sum / parts.length));
   };
 
   /* ---- router ---- */
@@ -161,6 +203,14 @@ window.Praxis = window.Praxis || {};
       P.modes.cases.renderCase(parts[1], app);
     } else if (parts[0] === "cases") {
       P.modes.cases.renderList(app);
+    } else if (parts[0] === "questions") {
+      P.modes.questions.render(app);
+    } else if (parts[0] === "flashcards") {
+      P.modes.flashcards.render(app);
+    } else if (parts[0] === "review" && parts[1]) {
+      P.modes.review.renderNotes(parts[1], app);
+    } else if (parts[0] === "review") {
+      P.modes.review.renderList(app);
     } else if (parts[0] === "sources") {
       renderSources(app);
     } else {
@@ -244,11 +294,11 @@ window.Praxis = window.Praxis || {};
         tile("blue", "userHeart", "Patient cases", "Work a real scenario, step by step",
              P.icon("clip", 15) + " " + casesDone + " of " + casesTotal + " completed", "#/cases", false) +
         tile("purple", "list", "Practice questions", "Quiz yourself with instant, kind feedback",
-             "Coming soon", null, true) +
+             questionsMeta(), "#/questions", false) +
         tile("green", "cards", "Flashcards", "Spaced repetition on key concepts",
-             "Coming soon", null, true) +
+             flashcardsMeta(), "#/flashcards", false) +
         tile("amber", "book", "Domain review", "Focused notes by the 4 exam domains",
-             "Coming soon", null, true) +
+             P.icon("book", 15) + " " + ((window.PRAXIS_NOTES || []).length) + " domains", "#/review", false) +
       '</div>' +
 
       '<p class="foot-note">' + footNote() +
@@ -289,6 +339,19 @@ window.Praxis = window.Praxis || {};
       var p = P.progress.cases[c.id];
       return p && p.done;
     }).length;
+  }
+
+  function questionsMeta() {
+    var qs = P.progress.questions;
+    if (qs && qs.answered) {
+      return P.icon("target", 15) + " " + Math.round(100 * qs.correct / qs.answered) + "% avg · " + qs.answered + " done";
+    }
+    return P.icon("target", 15) + " a quick recall quiz";
+  }
+
+  function flashcardsMeta() {
+    var due = P.dueCardCount();
+    return P.icon("refresh", 15) + " " + due + " card" + (due === 1 ? "" : "s") + " due";
   }
 
   function encourageBanner(readiness) {

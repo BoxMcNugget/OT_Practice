@@ -476,6 +476,77 @@ body {
 }
 .src-disclaimer svg { flex-shrink: 0; margin-top: 1px; }
 
+/* ---------- shared mode bits (start screens) ---------- */
+.mode-intro { color: var(--muted); font-size: 15px; margin: 0 0 20px; line-height: 1.65; max-width: 56ch; }
+.pills-label { font-size: 12.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); font-weight: 600; margin: 0 0 10px; }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.pill {
+  font: inherit; font-size: 13.5px; padding: 9px 14px; min-height: 40px;
+  border-radius: 999px; border: 1px solid var(--line); background: var(--card);
+  color: var(--ink-soft); cursor: pointer; transition: border-color .2s, background .2s, color .2s;
+}
+.pill:hover { border-color: var(--teal-line); }
+.pill.active { background: var(--teal-soft); border-color: var(--teal-line); color: var(--teal-dark); font-weight: 500; }
+.block-btn { width: 100%; }
+.mode-foot { font-size: 12.5px; color: var(--faint); margin-top: 16px; display: flex; align-items: center; gap: 6px; }
+.mode-foot a { color: var(--muted); }
+
+/* ---------- flashcards ---------- */
+.fc-summary { display: flex; gap: 18px; justify-content: center; margin: 4px 0 18px; color: var(--muted); font-size: 13.5px; }
+.fc-summary span { display: inline-flex; align-items: center; gap: 6px; }
+.flashcard-wrap { margin-bottom: 18px; }
+.flashcard {
+  position: relative; width: 100%; min-height: 260px;
+  border-radius: 18px; border: 1px solid var(--line); background: var(--card);
+  box-shadow: var(--shadow-sm); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  padding: 30px 28px 46px; text-align: center;
+  transition: background .3s, border-color .3s;
+}
+.flashcard:focus-visible { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-soft); }
+.flashcard.back-shown { background: var(--teal-soft); border-color: var(--teal-line); }
+.fc-face { width: 100%; }
+.fc-face.fc-back { display: none; }
+.flashcard.back-shown .fc-face.fc-front { display: none; }
+.flashcard.back-shown .fc-face.fc-back { display: block; animation: flipReveal .4s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes flipReveal { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+.fc-cat { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); font-weight: 600; margin-bottom: 12px; }
+.fc-face.fc-back .fc-cat { color: var(--teal-dark); }
+.fc-text { font-size: 22px; font-weight: 500; color: var(--ink); margin: 0; line-height: 1.4; }
+.fc-back-text { font-size: 17px; font-weight: 400; line-height: 1.6; color: var(--ink-soft); }
+.fc-hint { position: absolute; bottom: 16px; left: 0; right: 0; font-size: 12.5px; color: var(--faint); display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.fc-actions { display: none; gap: 10px; }
+.fc-actions.show { display: flex; animation: rise .35s both; }
+.fc-actions button { flex: 1; }
+
+/* ---------- domain review ---------- */
+.review-list { display: grid; gap: 12px; }
+.review-card {
+  display: flex; align-items: center; gap: 14px;
+  text-align: left; font: inherit; color: inherit; cursor: pointer;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 16px 18px; box-shadow: var(--shadow-sm);
+  transition: transform .2s, box-shadow .2s, border-color .2s; animation: rise .45s both;
+}
+.review-card:hover, .review-card:focus-visible { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--teal-line); outline: none; }
+.review-ic { width: 44px; height: 44px; flex-shrink: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.review-card.blue .review-ic { background: var(--blue-soft); color: var(--blue); }
+.review-card.purple .review-ic { background: var(--purple-soft); color: var(--purple); }
+.review-card.green .review-ic { background: var(--green-soft); color: var(--green); }
+.review-card.amber .review-ic { background: var(--amber-soft); color: var(--amber); }
+.review-body { min-width: 0; flex: 1; }
+.review-ttl { display: block; font-weight: 600; font-size: 16px; margin: 0 0 3px; }
+.review-blurb { display: block; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+
+.note-section {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 16px 18px; margin-bottom: 14px; box-shadow: var(--shadow-sm); animation: rise .45s both;
+}
+.note-section h2 { font-size: 16px; font-weight: 600; margin: 0 0 12px; color: var(--teal-dark); }
+.note-points { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.note-points li { display: flex; align-items: flex-start; gap: 10px; font-size: 14.5px; color: var(--ink-soft); line-height: 1.55; }
+.note-points li svg { flex-shrink: 0; margin-top: 3px; color: var(--teal); }
+
 /* ---------- draft-content notice ---------- */
 .draft-note {
   display: flex; align-items: flex-start; gap: 10px;
@@ -530,6 +601,9 @@ body {
   .player-actions .btn-ghost { width: 100%; }
   .done-stats { gap: 10px; }
   .stat { min-width: 0; flex: 1; padding: 12px 10px; }
+  .flashcard { min-height: 240px; }
+  .fc-text { font-size: 20px; }
+  .fc-back-text { font-size: 16px; }
 }
 
 @media (max-width: 380px) {

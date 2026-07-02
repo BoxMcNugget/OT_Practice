@@ -11,30 +11,41 @@ Built with plain HTML, CSS, and JavaScript — no accounts, no server, works on 
 
 ## What's here
 
-| Mode | Status | What it does |
-|------|--------|--------------|
-| **Patient cases** | Ready | Work a patient scenario step by step, with supportive feedback and teaching notes |
-| Practice questions | Coming soon | Quick quizzes with instant, kind feedback |
-| Flashcards | Coming soon | Spaced repetition on key concepts |
-| Domain review | Coming soon | Notes organized by the four exam domains |
+| Mode | What it does |
+|------|--------------|
+| **Patient cases** | Work a patient scenario step by step, with supportive feedback and teaching notes |
+| **Practice questions** | Quick quizzes (filter by domain) with instant, kind feedback |
+| **Flashcards** | Spaced repetition — the ones you're still learning come back sooner |
+| **Domain review** | Concise study notes organized by the four exam domains |
 
-There are **12 patient cases**, two in each of six practice areas: Neurological rehab,
-Orthopedics, Hand & upper extremity, Pediatrics, Mental health, and Older adults. Answer
-options are **shuffled every time** so she reads and reasons rather than memorizing positions.
+All four modes are live. Content by the numbers:
 
-A **Sources** page (linked in the footer) lists the real NBCOT/AOTA references so she can
-verify anything herself.
+- **12 patient cases**, two in each of six practice areas: Neurological rehab, Orthopedics,
+  Hand & upper extremity, Pediatrics, Mental health, and Older adults.
+- **20 practice questions** across the four exam domains.
+- **~30 flashcards** with real spaced repetition (Praxis remembers what's due).
+- **4 domains** of review notes.
 
-Progress (streak, completed cases, progress ring) is saved automatically in the browser.
+Answer options are **shuffled every time** so she reads and reasons rather than memorizing
+positions. A **Sources** page (linked in the footer) lists the real NBCOT/AOTA references.
+
+Progress (streak, completed cases, quiz accuracy, cards due, progress ring) is saved
+automatically in the browser.
 
 ## Files
 
 ```
-index.html          the page
-css/styles.css      look, feel, and animations
-js/app.js           homepage, navigation, progress tracking
-js/modes/cases.js   the Patient cases mode
-data/cases.js       the case content  ← edit this to add/fix cases
+index.html            the page
+css/styles.css        look, feel, and animations
+js/app.js             homepage, navigation, progress tracking
+js/modes/cases.js     the Patient cases mode
+js/modes/questions.js the Practice questions mode
+js/modes/flashcards.js the Flashcards mode (spaced repetition)
+js/modes/review.js    the Domain review mode
+data/cases.js         patient case content   ← edit to add/fix cases
+data/questions.js     practice questions
+data/flashcards.js    flashcards
+data/notes.js         domain review notes
 ```
 
 ## Try it locally
