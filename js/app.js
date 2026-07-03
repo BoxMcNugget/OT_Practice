@@ -72,7 +72,15 @@ window.Praxis = window.Praxis || {};
     x: '<path d="M6 6l12 12M18 6L6 18"/>',
     chevUp: '<path d="M6 15l6-6 6 6"/>',
     pulse: '<path d="M3 12h4l2 6 4-14 2 8h6"/>',
-    minus: '<path d="M6 12h12"/>'
+    minus: '<path d="M6 12h12"/>',
+    flag: '<path d="M5 21V4"/><path d="M5 4h12l-2.5 4L17 12H5"/>'
+  };
+
+  // renders an optional image/diagram for a question (image path or inline SVG)
+  P.questionFigure = function (q) {
+    if (q.imageSvg) return '<div class="q-figure">' + q.imageSvg + "</div>";
+    if (q.image) return '<div class="q-figure"><img src="' + esc(q.image) + '" alt="' + esc(q.imageAlt || "") + '"></div>';
+    return "";
   };
 
   P.icon = function (name, size) {
@@ -177,9 +185,10 @@ window.Praxis = window.Praxis || {};
   P.stats = function () {
     return P.progress.stats || (P.progress.stats = { byDomain: {}, answered: {}, totalSeen: 0, totalCorrect: 0 });
   };
-  // records the most recent outcome per question id
-  P.recordAnswer = function (q, correct) {
+  // records the most recent outcome per question id, plus confidence + pacing
+  P.recordAnswer = function (q, correct, confidence, elapsedMs) {
     var s = P.stats();
+    var DAY = 86400000;
     var d = q.domain || "Other";
     var bd = s.byDomain[d] || (s.byDomain[d] = { seen: 0, correct: 0 });
     var prev = s.answered[q.id];
@@ -190,7 +199,20 @@ window.Praxis = window.Praxis || {};
     }
     bd.seen++; if (correct) bd.correct++;
     s.totalSeen++; if (correct) s.totalCorrect++;
-    s.answered[q.id] = { correct: !!correct, ts: Date.now() };
+
+    var rec = { correct: !!correct, ts: Date.now() };
+    if (confidence) rec.confidence = confidence;
+    if (!correct) {
+      // spaced re-review: sooner if missed repeatedly, up to 4 days out
+      var misses = ((prev && prev.misses) || 0) + 1;
+      rec.misses = misses;
+      rec.due = Date.now() + Math.min(misses, 4) * DAY;
+    }
+    if (elapsedMs && elapsedMs > 0 && elapsedMs < 600000) {
+      s.timeCount = (s.timeCount || 0) + 1;
+      s.timeTotal = (s.timeTotal || 0) + elapsedMs;
+    }
+    s.answered[q.id] = rec;
     P.save();
   };
   P.missedQuestions = function () {
@@ -200,6 +222,67 @@ window.Praxis = window.Praxis || {};
       var a = s.answered[q.id];
       return a && a.correct === false;
     });
+  };
+  P.dueMissedCount = function () {
+    var s = P.progress.stats;
+    if (!s || !s.answered) return 0;
+    var now = Date.now();
+    return P.missedQuestions().filter(function (q) {
+      var a = s.answered[q.id];
+      return !a.due || a.due <= now;
+    }).length;
+  };
+  P.confidentlyWrong = function () {
+    var s = P.progress.stats;
+    if (!s || !s.answered) return [];
+    return (window.PRAXIS_QUESTIONS || []).filter(function (q) {
+      var a = s.answered[q.id];
+      return a && a.correct === false && a.confidence === "high";
+    });
+  };
+  P.avgQuestionSeconds = function () {
+    var s = P.progress.stats;
+    if (!s || !s.timeCount) return null;
+    return Math.round(s.timeTotal / s.timeCount / 1000);
+  };
+  P.examDate = function () { return P.progress.examDate || P.CONFIG.examDateISO || null; };
+  P.daysToExam = function () {
+    var iso = P.examDate();
+    if (!iso) return null;
+    return Math.ceil((new Date(iso + "T00:00:00") - new Date()) / 86400000);
+  };
+  P.weakestDomainName = function () {
+    var s = P.progress.stats;
+    if (!s || !s.byDomain) return null;
+    var weak = null;
+    Object.keys(s.byDomain).forEach(function (d) {
+      var bd = s.byDomain[d];
+      if (!bd.seen) return;
+      var acc = bd.correct / bd.seen;
+      if (acc < 0.85 && (!weak || acc < weak.acc)) weak = { d: d, acc: acc };
+    });
+    return weak ? weak.d : null;
+  };
+  // the single best next action, for the home "today's focus" card
+  P.recommendedAction = function () {
+    var cases = window.PRAXIS_CASES || [];
+    for (var i = 0; i < cases.length; i++) {
+      var pr = P.progress.cases[cases[i].id];
+      if (pr && !pr.done && pr.step > 0)
+        return { label: "Continue: " + cases[i].title, sub: "Pick up your patient case where you left off", hash: "#/cases/" + cases[i].id, cta: "Resume", icon: "play" };
+    }
+    var s = P.progress.stats;
+    if (!s || !s.totalSeen)
+      return { label: "Warm up with practice questions", sub: "A quick set to get started", hash: "#/questions", cta: "Start", icon: "play" };
+    var cw = P.confidentlyWrong().length;
+    if (cw) return { label: "Revisit your confident misses", sub: cw + " you were sure about but missed", hash: "#/progress", cta: "Review", icon: "bulb" };
+    var dm = P.dueMissedCount();
+    if (dm) return { label: "Review questions due for another look", sub: dm + " due today", hash: "#/progress", cta: "Review", icon: "refresh" };
+    var dc = P.dueCardCount();
+    if (dc) return { label: "Run your due flashcards", sub: dc + " card" + (dc === 1 ? "" : "s") + " due", hash: "#/flashcards", cta: "Start", icon: "cards" };
+    var weak = P.weakestDomainName();
+    if (weak) return { label: "Practice your weakest area", sub: weak, hash: "#/questions", cta: "Start", icon: "target" };
+    return { label: "Take a timed mock exam", sub: "Practice under real conditions", hash: "#/exam", cta: "Begin", icon: "target" };
   };
 
   // "progress" blends the study activities that have data
@@ -248,6 +331,8 @@ window.Praxis = window.Praxis || {};
       P.modes.review.renderList(app);
     } else if (parts[0] === "progress") {
       renderProgress(app);
+    } else if (parts[0] === "plan") {
+      renderPlan(app);
     } else if (parts[0] === "exam") {
       P.modes.exam.render(app);
     } else if (parts[0] === "sims" && parts[1]) {
@@ -297,15 +382,7 @@ window.Praxis = window.Praxis || {};
     var view = document.createElement("div");
     view.className = "view";
 
-    var target = continueTarget();
-    var contTitle = target
-      ? (target.review ? "Revisit: " + target.c.title
-        : (target.resume ? "Continue: " + target.c.title : "Start: " + target.c.title))
-      : "Patient cases";
-    var contSub = target
-      ? (target.resume ? "Patient case · pick up where you left off" : "Patient case · " + target.c.blurb)
-      : "Begin your first case";
-
+    var rec = P.recommendedAction();
     var casesDone = countDoneCases();
     var casesTotal = (window.PRAXIS_CASES || []).length;
 
@@ -321,15 +398,16 @@ window.Praxis = window.Praxis || {};
       '<div class="encourage">' + P.icon("spark", 20) +
         '<span>' + encourageBanner(readiness) + '</span></div>' +
 
-      '<button class="continue" id="continue-btn">' +
+      '<button class="continue" id="focus-btn">' +
         '<span class="continue-left">' +
-          '<span class="continue-ic">' + P.icon("play", 22) + '</span>' +
+          '<span class="continue-ic">' + P.icon(rec.icon || "play", 22) + '</span>' +
           '<span style="min-width:0">' +
-            '<span class="continue-ttl">' + esc(contTitle) + '</span>' +
-            '<span class="continue-sub">' + esc(contSub) + '</span>' +
+            '<span class="continue-kicker">Today\'s focus</span>' +
+            '<span class="continue-ttl">' + esc(rec.label) + '</span>' +
+            '<span class="continue-sub">' + esc(rec.sub) + '</span>' +
           '</span>' +
         '</span>' +
-        '<span class="btn-solid" aria-hidden="true">' + (target && target.resume ? "Resume" : "Begin") + '</span>' +
+        '<span class="btn-solid" aria-hidden="true">' + esc(rec.cta) + '</span>' +
       '</button>' +
 
       '<button class="exam-cta" id="exam-cta">' +
@@ -363,6 +441,7 @@ window.Praxis = window.Praxis || {};
       '</button>' +
 
       '<p class="foot-note">' + footNote() +
+        ' · <a href="#/plan">Plan</a>' +
         ' · <a href="#/progress">Progress</a>' +
         ' · <a href="#/sources">Sources</a>' +
         ' · <a href="#" id="about-content">about the content</a></p>';
@@ -370,10 +449,7 @@ window.Praxis = window.Praxis || {};
     app.appendChild(view);
 
     // wire up
-    document.getElementById("continue-btn").addEventListener("click", function () {
-      if (target) P.go("#/cases/" + target.c.id);
-      else P.go("#/cases");
-    });
+    document.getElementById("focus-btn").addEventListener("click", function () { P.go(rec.hash); });
     var examCta = document.getElementById("exam-cta");
     if (examCta) examCta.addEventListener("click", function () { P.go("#/exam"); });
     var simTile = document.getElementById("sim-tile");
@@ -428,9 +504,8 @@ window.Praxis = window.Praxis || {};
   }
 
   function footNote() {
-    var cfg = P.CONFIG;
-    if (cfg.examDateISO) {
-      var days = Math.ceil((new Date(cfg.examDateISO) - new Date()) / 86400000);
+    var days = P.daysToExam();
+    if (days != null) {
       if (days > 0) return days + " days until your exam · you're getting there";
       if (days === 0) return "Exam day — you've got this. Trust your preparation.";
     }
@@ -462,6 +537,12 @@ window.Praxis = window.Praxis || {};
   /* ---- progress / analytics page ---- */
   var Q_DOMAINS = ["Evaluation & assessment", "Analysis & planning", "Intervention", "Competency & ethics"];
 
+  function paceMsg(sec) {
+    if (sec <= 80) return "About " + sec + "s per question — nicely within the ~80s the real exam allows.";
+    if (sec <= 110) return "About " + sec + "s per question — a little over the ~80s exam pace; keep an eye on timing.";
+    return "About " + sec + "s per question — worth practicing a bit quicker; the exam allows roughly 80s each.";
+  }
+
   function renderProgress(app) {
     var s = P.progress.stats;
     var view = document.createElement("div");
@@ -486,6 +567,8 @@ window.Praxis = window.Praxis || {};
 
     var overallPct = Math.round(100 * s.totalCorrect / s.totalSeen);
     var missed = P.missedQuestions().length;
+    var avgSec = P.avgQuestionSeconds();
+    var confWrong = P.confidentlyWrong().length;
 
     var weakest = null;
     domains.forEach(function (d) {
@@ -511,13 +594,20 @@ window.Praxis = window.Praxis || {};
       '<div class="stat-cards">' +
         '<div class="metric"><div class="metric-num">' + overallPct + '%</div><div class="metric-lbl">overall accuracy</div></div>' +
         '<div class="metric"><div class="metric-num">' + s.totalSeen + '</div><div class="metric-lbl">questions answered</div></div>' +
-        '<div class="metric"><div class="metric-num">' + missed + '</div><div class="metric-lbl">to review</div></div>' +
+        '<div class="metric"><div class="metric-num">' + (avgSec != null ? avgSec + "s" : missed) + '</div><div class="metric-lbl">' +
+          (avgSec != null ? "avg / question" : "to review") + "</div></div>" +
       "</div>" +
+      (avgSec != null ? '<p class="pace-note">' + P.icon("clock", 14) + " " + esc(paceMsg(avgSec)) + "</p>" : "") +
+      (confWrong ? '<div class="focus-note warn">' + P.icon("bulb", 16) +
+        " <span><strong>" + confWrong + " confident mistake" + (confWrong === 1 ? "" : "s") +
+        "</strong> — the single highest-value thing to review, gently.</span></div>" : "") +
       (weakest && weakest.acc < 0.85 ? '<div class="focus-note">' + P.icon("target", 16) +
         " <span>Focus area: <strong>" + esc(weakest.d) + "</strong> — a good place to spend your next session.</span></div>" : "") +
       '<p class="pills-label" style="margin-top:22px">By exam domain</p>' +
       '<div class="dom-list">' + bars + "</div>" +
-      (missed ? '<button class="btn-solid block-btn" id="review-missed" style="margin-top:10px">' +
+      (confWrong ? '<button class="btn-solid block-btn" id="review-conf" style="margin-top:10px">' +
+        P.icon("bulb", 18) + " Review " + confWrong + " confident mistake" + (confWrong === 1 ? "" : "s") + "</button>" : "") +
+      (missed ? '<button class="btn-ghost block-btn" id="review-missed" style="margin-top:10px">' +
         P.icon("refresh", 18) + " Review " + missed + " missed question" + (missed === 1 ? "" : "s") + "</button>" : "") +
       '<p class="mode-foot">' + P.icon("info", 14) + " Accuracy reflects your most recent answer on each question.</p>";
 
@@ -525,10 +615,77 @@ window.Praxis = window.Praxis || {};
     P.wireBack(view);
     var rm = view.querySelector("#review-missed");
     if (rm) rm.addEventListener("click", function () { P.modes.questions.reviewMissed(app); });
+    var rc = view.querySelector("#review-conf");
+    if (rc) rc.addEventListener("click", function () { P.modes.questions.reviewConfidentMistakes(app); });
     requestAnimationFrame(function () {
       Array.prototype.forEach.call(view.querySelectorAll(".dom-fill"), function (f) {
         f.style.width = f.getAttribute("data-pct") + "%";
       });
+    });
+  }
+
+  /* ---- study plan page ---- */
+  function planMetric(num, label) {
+    return '<div class="metric"><div class="metric-num">' + num + '</div><div class="metric-lbl">' + label + "</div></div>";
+  }
+  function planMsg(days) {
+    if (days > 84) return "Plenty of runway. Build the habit now — a little every day beats cramming later.";
+    if (days > 28) return "A solid stretch ahead. Keep steady sessions and take a weekly mock exam to build stamina.";
+    if (days > 7) return "Final weeks — lean into your weak areas, your confident misses, and full-length mocks.";
+    return "Home stretch. Keep review light, trust your preparation, and protect your rest and sleep.";
+  }
+  function planRows() {
+    var rows = [
+      ["Mon", "Evaluation & assessment — questions plus flashcards"],
+      ["Tue", "Analysis & planning — questions plus a patient case"],
+      ["Wed", "Intervention — questions plus a clinical simulation"],
+      ["Thu", "Competency & ethics — questions, then review your misses"],
+      ["Fri", "Mixed practice or a timed mock exam"],
+      ["Sat", "Review confident misses and any due flashcards"],
+      ["Sun", "Rest, or a light domain review"]
+    ];
+    return rows.map(function (r) {
+      return '<div class="plan-row"><span class="plan-day">' + r[0] + '</span><span class="plan-task">' + esc(r[1]) + "</span></div>";
+    }).join("");
+  }
+
+  function renderPlan(app) {
+    var view = document.createElement("div");
+    view.className = "view";
+    var days = P.daysToExam();
+    var dateVal = P.progress.examDate || P.CONFIG.examDateISO || "";
+    var body;
+    if (days != null && days >= 0) {
+      var weeks = Math.max(1, Math.ceil(days / 7));
+      var perDay = days > 60 ? 10 : days > 30 ? 15 : 20;
+      body =
+        '<div class="stat-cards">' +
+          planMetric(days, "days to exam") +
+          planMetric("~" + weeks, "weeks left") +
+          planMetric("~" + perDay, "questions / day") +
+        "</div>" +
+        '<div class="focus-note">' + P.icon("target", 16) + " <span>" + esc(planMsg(days)) + "</span></div>" +
+        '<p class="pills-label" style="margin-top:22px">A simple weekly rhythm</p>' +
+        '<div class="plan-list">' + planRows() + "</div>" +
+        '<p class="mode-foot">' + P.icon("info", 14) + " Adjust it to fit your life — consistency matters more than perfection.</p>";
+    } else if (days != null) {
+      body = '<div class="focus-note">' + P.icon("target", 16) + " <span>Your exam date has passed. Update it above if you're planning another sitting.</span></div>";
+    } else {
+      body = '<p class="mode-intro">Set your exam date and Praxis will count down with you and suggest a simple daily rhythm.</p>';
+    }
+    view.innerHTML =
+      P.subhead("Study plan", "Set your exam date and get a simple plan", "#/") +
+      '<div class="plan-date"><label for="exam-date">Exam date</label>' +
+        '<input type="date" id="exam-date" value="' + esc(dateVal) + '"></div>' +
+      body;
+    app.appendChild(view);
+    P.wireBack(view);
+    var input = view.querySelector("#exam-date");
+    input.addEventListener("change", function () {
+      P.progress.examDate = input.value || null;
+      P.save();
+      app.innerHTML = "";
+      renderPlan(app);
     });
   }
 

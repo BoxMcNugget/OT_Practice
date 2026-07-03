@@ -132,5 +132,107 @@ window.PRAXIS_SIMS = [
         ]
       }
     ]
+  },
+
+  {
+    id: "sim-peds-01",
+    title: "School-based pediatrics — sensory and handwriting",
+    area: "Pediatrics",
+    difficulty: "Challenge",
+    blurb: "A child overwhelmed in class · gather information, then support",
+    patient: {
+      name: "Noah, 7",
+      scene:
+        "Noah is a second grader referred by his teacher. His handwriting is hard to read, he becomes overwhelmed by classroom noise, and he struggles with transitions between activities. He's bright and kind, and gets frustrated when his work looks messy."
+    },
+    sections: [
+      {
+        prompt: "Select the actions you would take to understand what's going on. Each shows what you find.",
+        options: [
+          { id: "a", text: "Observe Noah in the classroom during a writing task", score: 2,
+            result: "He grips the pencil tightly, presses hard, tires quickly, and glances anxiously toward noisy areas." },
+          { id: "b", text: "Talk with the teacher about when he struggles most", score: 2,
+            result: "The teacher notes he unravels during loud, unstructured times and transitions." },
+          { id: "c", text: "Ask the family about routines and what helps him at home", score: 1,
+            result: "At home, warnings before changes and a quiet space help him stay calm." },
+          { id: "d", text: "Screen his fine-motor skills and sensory responses in context", score: 2,
+            result: "You see reduced hand endurance and clear over-responsivity to noise." },
+          { id: "e", text: "Pull him into an unfamiliar room for a long testing battery right away", score: -2,
+            result: "The strange setting and length overwhelm him; the results won't reflect his real ability." },
+          { id: "f", text: "Assume he's simply being difficult on purpose", score: -2,
+            result: "This misreads his sensory and motor needs and risks harming your rapport." }
+        ]
+      },
+      {
+        prompt: "Select the actions you'd include to support Noah. Each shows what happens.",
+        options: [
+          { id: "a", text: "Offer sensory supports — movement breaks and noise-reducing options", score: 2,
+            result: "He regulates better and stays engaged longer." },
+          { id: "b", text: "Use a visual schedule and warnings to ease transitions", score: 2,
+            result: "Transitions become far smoother for him." },
+          { id: "c", text: "Collaborate with the teacher on simple classroom strategies", score: 2,
+            result: "The strategies carry over across his whole day." },
+          { id: "d", text: "Adapt writing tools — a pencil grip and slant board", score: 1,
+            result: "His grasp and posture improve and writing tires him less." },
+          { id: "e", text: "Make him sit through loud assemblies to toughen him up", score: -2,
+            result: "He's overwhelmed and more anxious, not desensitized." },
+          { id: "f", text: "Remove recess so he can practice handwriting instead", score: -2,
+            result: "Losing movement and a break worsens his regulation and focus." },
+          { id: "g", text: "Keep all strategies inside the therapy room only", score: -1,
+            result: "Gains don't carry over to where he actually struggles." }
+        ]
+      }
+    ]
+  },
+
+  {
+    id: "sim-sci-01",
+    title: "Spinal cord injury — inpatient rehab",
+    area: "Neurological rehab",
+    difficulty: "Challenge",
+    blurb: "C6 tetraplegia · evaluate safely, then build independence",
+    patient: {
+      name: "Darnell, 25",
+      scene:
+        "Darnell has a complete C6 spinal cord injury after a fall and is in inpatient rehab. He has wrist movement but limited hand function and impaired sensation below the injury. He's motivated to regain as much independence as he can."
+    },
+    sections: [
+      {
+        prompt: "Select the actions you would take to evaluate him safely. Each shows what you find.",
+        options: [
+          { id: "a", text: "Review the chart for his level of injury, skin status, and precautions", score: 2,
+            result: "You confirm a C6 level, intact skin so far, and orders to monitor for autonomic dysreflexia." },
+          { id: "b", text: "Assess his available movement and functional strength", score: 2,
+            result: "He has wrist extension (a basis for tenodesis grasp) but no active finger flexion." },
+          { id: "c", text: "Ask about his prior roles, home setup, and goals", score: 2,
+            result: "He was a student who lived independently and badly wants to feed and groom himself again." },
+          { id: "d", text: "Check his skin and teach the importance of pressure relief", score: 1,
+            result: "Skin is intact; he learns why regular weight shifts matter with reduced sensation." },
+          { id: "e", text: "Skip the skin assessment because he says he feels fine", score: -2,
+            result: "With impaired sensation he can't feel a developing pressure injury — skipping this is unsafe." },
+          { id: "f", text: "Assume he'll be fully dependent and set no active goals", score: -2,
+            result: "This sells him short; at C6 meaningful independence is achievable." }
+        ]
+      },
+      {
+        prompt: "Select the actions you'd include in his intervention. Each shows what happens.",
+        options: [
+          { id: "a", text: "Train his tenodesis grasp and provide a universal cuff for self-feeding", score: 2,
+            result: "He feeds himself for the first time since the injury — a big win." },
+          { id: "b", text: "Teach and schedule pressure-relief weight shifts and skin checks", score: 2,
+            result: "He builds a routine that protects his skin." },
+          { id: "c", text: "Educate him and his caregivers on recognizing autonomic dysreflexia", score: 2,
+            result: "They learn the warning signs and what to do — a potential life-saver." },
+          { id: "d", text: "Adapt his ADLs with appropriate equipment", score: 1,
+            result: "Adaptations open up more of his daily routine to him." },
+          { id: "e", text: "Focus only on restoring finger grip through strengthening exercises", score: -2,
+            result: "The finger muscles aren't innervated at C6; this misdirects effort away from what works." },
+          { id: "f", text: "Keep him in bed to avoid any risk", score: -2,
+            result: "Immobility invites pressure injuries and deconditioning and stalls his goals." },
+          { id: "g", text: "Do all of his self-care for him to save time", score: -1,
+            result: "Doing it for him removes the very independence he's working toward." }
+        ]
+      }
+    ]
   }
 ];

@@ -127,7 +127,7 @@ window.Praxis.modes = window.Praxis.modes || {};
     return "Mixed — a blend of Core and Challenge questions.";
   }
 
-  /* -------- review only the questions she's missed -------- */
+  /* -------- review only the questions she's missed (due ones first) -------- */
   M.reviewMissed = function (app) {
     var missed = P.missedQuestions ? P.missedQuestions() : [];
     if (!missed.length) {
@@ -135,8 +135,16 @@ window.Praxis.modes = window.Praxis.modes || {};
       P.go("#/progress");
       return;
     }
-    var pool = shuffle(missed).slice(0, 20);
-    renderQ(app, { pool: pool, i: 0, correct: 0, touched: false });
+    var ans = (P.progress.stats && P.progress.stats.answered) || {};
+    missed.sort(function (a, b) { return ((ans[a.id] || {}).due || 0) - ((ans[b.id] || {}).due || 0); });
+    renderQ(app, { pool: missed.slice(0, 20), i: 0, correct: 0, touched: false });
+  };
+
+  /* -------- review the ones she was confident but wrong about -------- */
+  M.reviewConfidentMistakes = function (app) {
+    var pool = P.confidentlyWrong ? P.confidentlyWrong() : [];
+    if (!pool.length) { P.toast("No confident mistakes to review — that's a good place to be."); P.go("#/progress"); return; }
+    renderQ(app, { pool: shuffle(pool).slice(0, 20), i: 0, correct: 0, touched: false });
   };
 
   /* -------- one question -------- */
@@ -160,8 +168,16 @@ window.Praxis.modes = window.Praxis.modes || {};
       '<p class="progress-text">Question ' + (s.i + 1) + " of " + s.pool.length +
         (levelOf(q) === "Challenge" ? ' <span class="level-badge challenge">Challenge</span>' : "") + "</p>" +
       '<p class="q-prompt">' + esc(q.prompt) + "</p>" +
+      P.questionFigure(q) +
       '<p class="q-hint">' + P.icon("info", 15) + " " + selectLabel + "</p>" +
       '<div class="options" id="opts">' + opts + "</div>" +
+      '<div class="conf" id="conf">' +
+        '<span class="conf-label">How sure are you?</span>' +
+        '<div class="conf-opts">' +
+          '<button class="conf-chip" data-c="low">Not sure</button>' +
+          '<button class="conf-chip" data-c="mid">Fairly sure</button>' +
+          '<button class="conf-chip" data-c="high">Confident</button>' +
+        "</div></div>" +
       '<div id="feedback-slot"></div>' +
       '<div class="player-actions">' +
         '<button class="btn-ghost" id="exit-btn">' + P.icon("home", 18) + " Exit</button>" +
@@ -175,6 +191,9 @@ window.Praxis.modes = window.Praxis.modes || {};
     var primary = view.querySelector("#primary-btn");
     var selection = [];
     var revealed = false;
+    var selectedConfidence = null;
+    var startTime = Date.now();
+    function refreshPrimary() { primary.disabled = !(selection.length && selectedConfidence); }
 
     view.querySelector("#exit-btn").addEventListener("click", function () { P.go("#/"); });
 
@@ -193,16 +212,27 @@ window.Praxis.modes = window.Praxis.modes || {};
           var on = selection.indexOf(oid) >= 0;
           btn.classList.toggle("selected", on); btn.setAttribute("aria-pressed", on ? "true" : "false");
         }
-        primary.disabled = selection.length === 0;
+        refreshPrimary();
+      });
+    });
+
+    var confWrap = view.querySelector("#conf");
+    Array.prototype.forEach.call(confWrap.querySelectorAll(".conf-chip"), function (btn) {
+      btn.addEventListener("click", function () {
+        if (revealed) return;
+        selectedConfidence = btn.getAttribute("data-c");
+        Array.prototype.forEach.call(confWrap.querySelectorAll(".conf-chip"), function (b) { b.classList.toggle("on", b === btn); });
+        refreshPrimary();
       });
     });
 
     primary.addEventListener("click", function () {
       if (!revealed) {
         revealed = true;
+        confWrap.style.display = "none";
         var isBest = setsEqual(selection, q.correct);
         if (isBest) s.correct++;
-        P.recordAnswer(q, isBest);
+        P.recordAnswer(q, isBest, selectedConfidence, Date.now() - startTime);
         if (!s.touched) { s.touched = true; P.touchStreak(); }
         Array.prototype.forEach.call(optsWrap.querySelectorAll(".opt"), function (btn) {
           var oid = btn.getAttribute("data-oid");
@@ -215,11 +245,20 @@ window.Praxis.modes = window.Praxis.modes || {};
         var tone = isBest ? "affirm" : "revisit";
         var head = isBest ? "Nice reasoning" : "Let's look at this together";
         var lead = isBest ? q.affirm : q.coach;
+        var metaNote = "";
+        if (!isBest && selectedConfidence === "high") {
+          metaNote = '<p class="feedback-meta">' + P.icon("bulb", 14) +
+            " You felt sure on this one, so it's a high-value one to revisit — no judgment, just useful data.</p>";
+        } else if (isBest && selectedConfidence === "low") {
+          metaNote = '<p class="feedback-meta">' + P.icon("check", 14) +
+            " You got it even though you weren't sure — your instincts are stronger than you think.</p>";
+        }
         slot.innerHTML =
           '<div class="feedback ' + tone + '">' +
             '<p class="feedback-head">' + P.icon(isBest ? "check" : "bulb", 18) + " " + esc(head) + "</p>" +
             '<p class="feedback-body">' + esc(lead) + "<br><br>" + q.rationale + "</p>" +
             (q.teach ? '<p class="feedback-teach">' + P.icon("bulb", 15) + " " + esc(q.teach) + "</p>" : "") +
+            metaNote +
             whyHTML(q) +
           "</div>";
         slot.querySelector(".feedback").scrollIntoView({ behavior: "smooth", block: "center" });

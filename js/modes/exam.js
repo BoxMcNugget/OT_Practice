@@ -124,16 +124,34 @@ window.Praxis.modes = window.Praxis.modes || {};
       pool: buildPool(len),
       i: 0,
       answers: {},          // qid -> [selected ids]
+      flags: {},            // qid -> true
       durationMs: len * PER_Q_MS,
       startTs: Date.now(),
       timerId: null,
       finished: false,
       touched: false
     };
+    startTimer(s);
     renderExamQ(app, s);
   }
 
   function remaining(s) { return s.durationMs - (Date.now() - s.startTs); }
+  function answeredCount(s) { var n = 0; s.pool.forEach(function (q) { if ((s.answers[q.id] || []).length) n++; }); return n; }
+  function flaggedCount(s) { return s.flags ? Object.keys(s.flags).length : 0; }
+
+  function examBar(s) {
+    return '<div class="exam-bar">' +
+      '<button class="exam-quit" id="exam-quit" aria-label="Quit exam">' + P.icon("x", 18) + "</button>" +
+      '<div class="exam-timer" id="exam-timer">' + P.icon("clock", 15) + ' <span id="tval">' + fmtTime(remaining(s)) + "</span></div>" +
+      '<div class="exam-count">' + answeredCount(s) + " / " + s.pool.length + "</div>" +
+    "</div>";
+  }
+  function wireQuit(view, s) {
+    var b = view.querySelector("#exam-quit");
+    if (b) b.addEventListener("click", function () {
+      if (confirm("Quit this exam? Your progress in it won't be saved.")) { stopTimer(s); P.go("#/"); }
+    });
+  }
 
   function renderExamQ(app, s) {
     app.innerHTML = "";
@@ -143,6 +161,8 @@ window.Praxis.modes = window.Praxis.modes || {};
     var pct = Math.round(s.i / s.pool.length * 100);
     var selectLabel = q.type === "multi" ? "Select all that apply" : "Select one";
     var prior = s.answers[q.id] || [];
+    var flagged = !!(s.flags && s.flags[q.id]);
+    var last = s.i === s.pool.length - 1;
 
     var opts = shuffle(q.options).map(function (o) {
       var on = prior.indexOf(o.id) >= 0;
@@ -151,24 +171,27 @@ window.Praxis.modes = window.Praxis.modes || {};
         '<span class="opt-text">' + esc(o.text) + "</span></button>";
     }).join("");
 
-    var last = s.i === s.pool.length - 1;
-
     view.innerHTML =
-      '<div class="exam-bar">' +
-        '<button class="exam-quit" id="exam-quit" aria-label="Quit exam">' + P.icon("x", 18) + "</button>" +
-        '<div class="exam-timer" id="exam-timer">' + P.icon("clock", 15) + ' <span id="tval">' + fmtTime(remaining(s)) + "</span></div>" +
-        '<div class="exam-count">' + (s.i + 1) + " / " + s.pool.length + "</div>" +
-      "</div>" +
+      examBar(s) +
       '<div class="progress-rail"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
-      '<p class="q-prompt" style="margin-top:14px">' + esc(q.prompt) + "</p>" +
+      '<div class="exam-subrow">' +
+        '<span class="exam-pos">Question ' + (s.i + 1) + " of " + s.pool.length + "</span>" +
+        '<div class="exam-subrow-actions">' +
+          '<button class="exam-chip' + (flagged ? " on" : "") + '" id="exam-flag">' + P.icon("flag", 15) + " " + (flagged ? "Flagged" : "Flag") + "</button>" +
+          '<button class="exam-chip" id="exam-review">' + P.icon("list", 15) + " Review</button>" +
+        "</div>" +
+      "</div>" +
+      '<p class="q-prompt" style="margin-top:8px">' + esc(q.prompt) + "</p>" +
+      P.questionFigure(q) +
       '<p class="q-hint">' + P.icon("info", 15) + " " + selectLabel + "</p>" +
       '<div class="options" id="opts">' + opts + "</div>" +
-      '<div class="player-actions">' +
-        '<button class="btn-ghost" id="exam-finish">Finish now</button>' +
-        '<button class="btn-solid" id="exam-next">' + (last ? "Finish exam" : "Next") + " " + P.icon("right", 18) + "</button>" +
+      '<div class="player-actions exam-nav">' +
+        '<button class="btn-ghost" id="exam-prev"' + (s.i === 0 ? " disabled" : "") + ">" + P.icon("left", 18) + " Back</button>" +
+        '<button class="btn-solid" id="exam-next">' + (last ? "Review &amp; finish" : "Next " + P.icon("right", 18)) + "</button>" +
       "</div>";
 
     app.appendChild(view);
+    wireQuit(view, s);
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     var optsWrap = view.querySelector("#opts");
@@ -188,34 +211,77 @@ window.Praxis.modes = window.Praxis.modes || {};
           btn.classList.toggle("selected", on); btn.setAttribute("aria-pressed", on ? "true" : "false");
         }
         if (!s.touched) { s.touched = true; P.touchStreak(); }
+        var cnt = view.querySelector(".exam-count"); if (cnt) cnt.textContent = answeredCount(s) + " / " + s.pool.length;
       });
     });
 
+    view.querySelector("#exam-flag").addEventListener("click", function () {
+      if (!s.flags) s.flags = {};
+      if (s.flags[q.id]) delete s.flags[q.id]; else s.flags[q.id] = true;
+      var on = !!s.flags[q.id];
+      this.classList.toggle("on", on);
+      this.innerHTML = P.icon("flag", 15) + " " + (on ? "Flagged" : "Flag");
+    });
+    view.querySelector("#exam-prev").addEventListener("click", function () { if (s.i > 0) { s.i--; renderExamQ(app, s); } });
     view.querySelector("#exam-next").addEventListener("click", function () {
-      stopTimer(s);
-      if (last) finishExam(app, s);
-      else { s.i++; renderExamQ(app, s); }
+      if (last) renderExamReview(app, s); else { s.i++; renderExamQ(app, s); }
     });
-    view.querySelector("#exam-finish").addEventListener("click", function () {
-      if (confirm("Finish the exam now and see your results?")) { stopTimer(s); finishExam(app, s); }
-    });
-    view.querySelector("#exam-quit").addEventListener("click", function () {
-      if (confirm("Quit this exam? Your progress in it won't be saved.")) { stopTimer(s); P.go("#/"); }
-    });
-
-    startTimer(s, view);
+    view.querySelector("#exam-review").addEventListener("click", function () { renderExamReview(app, s); });
   }
 
-  function startTimer(s, view) {
+  /* -------- review / navigator screen -------- */
+  function renderExamReview(app, s) {
+    app.innerHTML = "";
+    var view = document.createElement("div");
+    view.className = "view";
+    var answered = answeredCount(s), flagged = flaggedCount(s), unanswered = s.pool.length - answered;
+
+    var cells = s.pool.map(function (q, idx) {
+      var isAns = (s.answers[q.id] || []).length > 0;
+      var isFlag = !!(s.flags && s.flags[q.id]);
+      return '<button class="rev-cell' + (isAns ? " answered" : "") + (isFlag ? " flagged" : "") + '" data-idx="' + idx + '">' + (idx + 1) + "</button>";
+    }).join("");
+
+    view.innerHTML =
+      examBar(s) +
+      '<h2 class="subhead-ttl" style="margin:16px 0 6px">Review your exam</h2>' +
+      '<p class="mode-intro">Tap any question to go back to it. ' + answered + " answered · " + unanswered + " unanswered · " + flagged + " flagged.</p>" +
+      '<div class="rev-legend">' +
+        '<span><span class="rlg answered"></span> answered</span>' +
+        '<span><span class="rlg"></span> unanswered</span>' +
+        '<span><span class="rlg flagged"></span> flagged</span>' +
+      "</div>" +
+      '<div class="rev-grid">' + cells + "</div>" +
+      '<div class="player-actions" style="margin-top:20px">' +
+        '<button class="btn-ghost" id="rev-back">' + P.icon("left", 18) + " Back to questions</button>" +
+        '<button class="btn-solid" id="rev-submit">Submit exam</button>' +
+      "</div>";
+
+    app.appendChild(view);
+    wireQuit(view, s);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    Array.prototype.forEach.call(view.querySelectorAll(".rev-cell"), function (c) {
+      c.addEventListener("click", function () { s.i = parseInt(c.getAttribute("data-idx"), 10); renderExamQ(app, s); });
+    });
+    view.querySelector("#rev-back").addEventListener("click", function () { renderExamQ(app, s); });
+    view.querySelector("#rev-submit").addEventListener("click", function () {
+      var msg = unanswered > 0
+        ? "You have " + unanswered + " unanswered question" + (unanswered === 1 ? "" : "s") + ". Submit anyway?"
+        : "Submit your exam and see your results?";
+      if (confirm(msg)) { stopTimer(s); finishExam(app, s); }
+    });
+  }
+
+  function startTimer(s) {
     stopTimer(s);
-    var tval = view.querySelector("#tval");
-    var wrap = view.querySelector("#exam-timer");
     s.timerId = setInterval(function () {
-      if (!document.body.contains(tval)) { clearInterval(s.timerId); return; }
+      if (location.hash.indexOf("#/exam") !== 0) { stopTimer(s); return; } // left the exam
       var rem = remaining(s);
-      tval.textContent = fmtTime(rem);
-      if (rem <= 60000) wrap.classList.add("low");
-      if (rem <= 0) { clearInterval(s.timerId); if (!s.finished) finishExam(document.getElementById("app"), s); }
+      var el = document.getElementById("tval");
+      var wrap = document.getElementById("exam-timer");
+      if (el) el.textContent = fmtTime(rem);
+      if (wrap && rem <= 60000) wrap.classList.add("low");
+      if (rem <= 0) { stopTimer(s); if (!s.finished) finishExam(document.getElementById("app"), s); }
     }, 1000);
   }
   function stopTimer(s) { if (s.timerId) { clearInterval(s.timerId); s.timerId = null; } }

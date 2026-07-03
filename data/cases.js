@@ -1076,6 +1076,443 @@ window.PRAXIS_CASES = [
         teach: "Offering simple choices ('washcloth or sponge?') can restore a sense of control and reduce resistance."
       }
     ]
+  },
+
+  /* ================= CHALLENGE CASES — harder, complex, uncommon ================= */
+
+  {
+    id: "poly-amputation-01",
+    title: "Polytrauma — amputation, fracture, and TBI",
+    area: "Complex & polytrauma",
+    blurb: "Inpatient rehab · competing priorities across three injuries",
+    difficulty: "Challenge",
+    domains: ["Evaluation", "Intervention"],
+    setting: "Inpatient rehabilitation",
+    patient: {
+      name: "Marcus, 29",
+      setting: "Inpatient rehab · after a motorcycle collision",
+      summary:
+        "Marcus survived a motorcycle collision with three injuries at once: a right (dominant) below-elbow amputation, a left femur fracture that is non-weight-bearing, and a mild traumatic brain injury that leaves him impulsive and easily distracted. He's determined but frustrated, and every task is complicated by more than one of these."
+    },
+    steps: [
+      {
+        prompt: "With three injuries pulling in different directions, what's the best initial OT priority?",
+        hint: "Think safety and occupation before any single injury.",
+        type: "single",
+        options: [
+          { id: "a", text: "Build an occupational profile and establish safe ADL and transfer methods within all of his precautions" },
+          { id: "b", text: "Begin prosthetic training on the right arm right away" },
+          { id: "c", text: "Focus only on the amputation and set the leg and cognition aside" },
+          { id: "d", text: "Start high-level community outings to build confidence" }
+        ],
+        correct: ["a"],
+        affirm: "Yes — safe, occupation-based function within every precaution comes first.",
+        coach: "Each injury matters, but let's find the priority that accounts for all three at once.",
+        rationale:
+          "With polytrauma, start by understanding Marcus and establishing <strong>safe methods that respect every precaution</strong> — the non-weight-bearing leg, the healing residual limb, and his cognition. Prosthetic training comes later once the limb is ready, and no single injury can be treated in isolation.",
+        teach: "When precautions compete, the safest option that honors all of them usually wins on the exam."
+      },
+      {
+        prompt: "Why is teaching Marcus a standard transfer especially difficult here?",
+        hint: "Consider what he'd normally push with.",
+        type: "single",
+        options: [
+          { id: "a", text: "His injuries limit both the leg he'd push off with and the arm he'd push up with, so transfers must be adapted to his remaining abilities" },
+          { id: "b", text: "He's too young to learn a new transfer" },
+          { id: "c", text: "An amputation always makes transfers impossible" },
+          { id: "d", text: "There's no added difficulty — a standard transfer is fine" }
+        ],
+        correct: ["a"],
+        affirm: "Exactly — you spotted how the injuries stack against each other.",
+        coach: "Picture the mechanics: which limbs would a standard transfer rely on?",
+        rationale:
+          "A typical transfer loads a <strong>weight-bearing leg and a pushing arm</strong> — but his left leg is non-weight-bearing and his right arm is amputated. Recognizing that both are compromised is the key to adapting the technique safely.",
+        teach: "Naming the conflict between injuries is exactly the reasoning these complex cases test."
+      },
+      {
+        prompt: "His mild TBI causes impulsivity and reduced attention. Which strategies help him learn new ADL techniques safely? Choose all that apply.",
+        hint: "You can select more than one.",
+        type: "multi",
+        options: [
+          { id: "a", text: "Break tasks into short, simple steps with repetition" },
+          { id: "b", text: "Reduce distractions in the environment during training" },
+          { id: "c", text: "Use consistent routines and clear cues" },
+          { id: "d", text: "Teach everything at once in a busy, stimulating space" },
+          { id: "e", text: "Assume he'll remember a technique after one demonstration" }
+        ],
+        correct: ["a", "b", "c"],
+        affirm: "Great — you matched the teaching to how his brain is learning right now.",
+        coach: "Let's keep the strategies that fit impulsivity and low attention, and drop the ones that fight them.",
+        rationale:
+          "Cognitive limits from TBI call for <strong>short steps, low distraction, repetition, and routine</strong>. Overloading him or expecting one-trial learning sets him up to fail and raises safety risk during transfers he already finds hard.",
+        teach: "His cognition shapes every other goal — safe learning has to account for it."
+      },
+      {
+        prompt: "Marcus is impatient to use a prosthesis. What's the best OT response now?",
+        hint: "Balance honesty, hope, and what he can do today.",
+        type: "single",
+        options: [
+          { id: "a", text: "Start residual-limb care and one-handed adaptive techniques now, and plan prosthetic training with him for when the limb is ready" },
+          { id: "b", text: "Tell him a prosthesis isn't realistic for him" },
+          { id: "c", text: "Fit any prosthesis immediately, regardless of healing" },
+          { id: "d", text: "Avoid the topic so he doesn't get his hopes up" }
+        ],
+        correct: ["a"],
+        affirm: "Beautiful — honest, hopeful, and useful today.",
+        coach: "His goal is motivating. Let's meet it with what's safe and possible right now.",
+        rationale:
+          "You can honor his goal by doing meaningful work today — <strong>residual-limb shaping and desensitization, skin checks, and one-handed techniques</strong> — while collaboratively planning prosthetic training for when healing allows. Rushing a fitting or shutting the door both fail him.",
+        teach: "Meaningful, honest goal-setting keeps a frustrated client engaged through a long recovery."
+      }
+    ]
+  },
+
+  {
+    id: "cva-hip-fracture-01",
+    title: "Stroke complicated by a hip fracture",
+    area: "Complex & polytrauma",
+    blurb: "Inpatient rehab · when the weak side is also the fractured side",
+    difficulty: "Challenge",
+    domains: ["Evaluation", "Intervention"],
+    setting: "Inpatient rehabilitation",
+    patient: {
+      name: "Elena, 76",
+      setting: "Inpatient rehab · left hemiparesis after a stroke, then a fall",
+      summary:
+        "Elena was recovering from a right CVA with left-sided weakness when she fell and fractured her left hip, which was surgically repaired. Now her affected side is also the side with weight-bearing and movement restrictions — the very limb her stroke rehab needs her to use is the one she must protect."
+    },
+    steps: [
+      {
+        prompt: "Why does the new hip fracture on her already-weak side complicate her stroke rehab?",
+        hint: "Think about what the affected side now has to do — and can't.",
+        type: "single",
+        options: [
+          { id: "a", text: "Her affected side now carries both weakness and weight-bearing restrictions, so mobility and transfer retraining must protect the hip while still promoting recovery" },
+          { id: "b", text: "It doesn't really change her rehab" },
+          { id: "c", text: "She should stop stroke rehab entirely" },
+          { id: "d", text: "The fracture guarantees she'll never walk again" }
+        ],
+        correct: ["a"],
+        affirm: "Yes — you named the conflict at the heart of this case.",
+        coach: "Consider what the stroke side needs to do, and what the fracture won't allow.",
+        rationale:
+          "Stroke rehab typically encourages <strong>using and bearing weight through the affected side</strong>, but the fresh hip fracture restricts exactly that. Holding both truths — protect the hip, keep promoting recovery — is the whole challenge.",
+        teach: "Two conditions on the same limb often pull treatment in opposite directions; you plan for both."
+      },
+      {
+        prompt: "Before any mobility or transfer training, what must the OT do first?",
+        hint: "You can't plan around a restriction you haven't confirmed.",
+        type: "single",
+        options: [
+          { id: "a", text: "Confirm her weight-bearing status and hip precautions with the team and plan within them" },
+          { id: "b", text: "Assume she can bear full weight on the operated leg" },
+          { id: "c", text: "Proceed without checking the surgeon's orders" },
+          { id: "d", text: "Begin resistive strengthening to the hip right away" }
+        ],
+        correct: ["a"],
+        affirm: "Right — confirm the limits before working within them.",
+        coach: "Let's make sure the plan is built on her actual orders, not a guess.",
+        rationale:
+          "You can't safely retrain transfers without knowing her <strong>weight-bearing status and precautions</strong>. Assuming or ignoring them risks the surgical repair. Confirm first, then adapt.",
+        teach: "Weight-bearing orders drive the whole mobility plan after a fracture repair."
+      },
+      {
+        prompt: "Which approaches fit her combined needs? Choose all that apply.",
+        hint: "You can select more than one.",
+        type: "multi",
+        options: [
+          { id: "a", text: "Adapt transfers and ADLs to honor the hip precautions and her hemiparesis together" },
+          { id: "b", text: "Coordinate closely with the team on weight-bearing and mobility" },
+          { id: "c", text: "Continue stroke-recovery strategies within the fracture's limits" },
+          { id: "d", text: "Have her bear full weight on the operated leg to speed progress" },
+          { id: "e", text: "Abandon affected-side use entirely" }
+        ],
+        correct: ["a", "b", "c"],
+        affirm: "Nicely balanced — you protected the hip and kept her recovery moving.",
+        coach: "Let's keep the strategies that respect both conditions at once.",
+        rationale:
+          "Good planning <strong>adapts to both conditions, coordinates with the team, and continues recovery within the limits</strong>. Forcing full weight-bearing endangers the repair, and abandoning affected-side use gives up on her stroke recovery.",
+        teach: "The art here is doing stroke rehab and fracture protection at the same time, not choosing one."
+      },
+      {
+        prompt: "Elena is discouraged by the setback after working so hard on her stroke recovery. What's the best response?",
+        hint: "Meet the feeling, then move forward together.",
+        type: "single",
+        options: [
+          { id: "a", text: "Validate her frustration, frame the setback realistically, and adjust the goals with her" },
+          { id: "b", text: "Tell her to stop complaining and keep going" },
+          { id: "c", text: "Ignore how she feels and focus only on tasks" },
+          { id: "d", text: "Promise she'll be fully recovered within a week" }
+        ],
+        correct: ["a"],
+        affirm: "Yes — honoring the setback keeps her in the fight.",
+        coach: "This is a real blow for her. Let's respond to the person, not just the injury.",
+        rationale:
+          "<strong>Validating her feelings and re-setting goals together</strong> respects a real setback and keeps her engaged. Dismissing her or over-promising erodes the trust her recovery depends on.",
+        teach: "Setbacks are part of complex recoveries; naming them honestly protects motivation."
+      }
+    ]
+  },
+
+  {
+    id: "tha-dementia-01",
+    title: "Hip replacement with dementia",
+    area: "Older adults",
+    blurb: "When the client can't reliably follow precautions",
+    difficulty: "Challenge",
+    domains: ["Intervention", "Practice management"],
+    setting: "Skilled nursing / rehab",
+    patient: {
+      name: "Rosa, 84",
+      setting: "Post right total hip replacement (posterior approach) · moderate dementia",
+      summary:
+        "Rosa had a posterior total hip replacement and has moderate dementia. She lives with her daughter. Standard hip-precaution teaching assumes a client can remember and follow rules — but Rosa can't reliably recall them, which changes how you keep her hip safe."
+    },
+    steps: [
+      {
+        prompt: "Why is standard precaution teaching insufficient for Rosa?",
+        hint: "What does the usual approach quietly assume?",
+        type: "single",
+        options: [
+          { id: "a", text: "Her dementia makes it unrealistic to rely on her remembering precautions, so the plan must lean on the environment and her caregiver" },
+          { id: "b", text: "Precautions don't apply to older adults" },
+          { id: "c", text: "She simply needs to try harder to remember" },
+          { id: "d", text: "Dementia means she can't take part in OT at all" }
+        ],
+        correct: ["a"],
+        affirm: "Right — you adjusted the plan to how her memory actually works.",
+        coach: "Think about what 'teach the precautions' assumes, and whether that holds for Rosa.",
+        rationale:
+          "Teaching precautions relies on <strong>recall and carryover</strong>, which dementia limits. The safe plan shifts weight onto <strong>environmental setup and caregiver support</strong> rather than her memory.",
+        teach: "When a client can't hold onto rules, you change the environment, not just the instructions."
+      },
+      {
+        prompt: "Which strategies best protect her hip given the dementia? Choose all that apply.",
+        hint: "You can select more than one.",
+        type: "multi",
+        options: [
+          { id: "a", text: "Set up the environment to prevent violations (raised seating, remove low chairs)" },
+          { id: "b", text: "Educate and train the daughter as the primary strategy" },
+          { id: "c", text: "Use simple, consistent routines and cues for transfers" },
+          { id: "d", text: "Give her a printed list of precautions to memorize" },
+          { id: "e", text: "Assume she'll follow verbal precautions on her own" }
+        ],
+        correct: ["a", "b", "c"],
+        affirm: "Great — you protected her hip without depending on her memory.",
+        coach: "Let's keep the strategies that work even when she can't recall the rules.",
+        rationale:
+          "<strong>Environmental setup, caregiver training, and consistent routines</strong> protect the hip without relying on recall. A memorization list or independent adherence won't hold up with moderate dementia.",
+        teach: "Raising seat height so deep hip flexion can't happen is safer than asking her to remember not to bend."
+      },
+      {
+        prompt: "Rosa becomes agitated during ADL retraining. What's the best approach?",
+        hint: "Adapt the approach rather than push the task.",
+        type: "single",
+        options: [
+          { id: "a", text: "Simplify the task, use a calm familiar routine, offer choices, and reduce triggers" },
+          { id: "b", text: "Insist she finish the task quickly" },
+          { id: "c", text: "Physically restrain her to complete it" },
+          { id: "d", text: "Stop all ADL work with her indefinitely" }
+        ],
+        correct: ["a"],
+        affirm: "Yes — meet her where she is and lower the distress.",
+        coach: "Let's find the response that calms rather than escalates.",
+        rationale:
+          "<strong>Simplifying, using familiar routines, offering choices, and reducing triggers</strong> ease dementia-related agitation. Forcing, restraining, or abandoning care are neither safe nor person-centered.",
+        teach: "A calm, familiar approach often accomplishes more than pushing through resistance."
+      },
+      {
+        prompt: "The daughter is overwhelmed managing both the precautions and the dementia. What's a core OT role?",
+        hint: "The caregiver is part of who you serve.",
+        type: "single",
+        options: [
+          { id: "a", text: "Educate and support the daughter with doable strategies, and connect her to resources and respite" },
+          { id: "b", text: "Focus only on Rosa and leave the daughter out" },
+          { id: "c", text: "Tell the daughter she has to manage on her own" },
+          { id: "d", text: "Recommend a nursing home without any assessment" }
+        ],
+        correct: ["a"],
+        affirm: "Exactly — supporting the caregiver protects Rosa too.",
+        coach: "Let's remember the daughter is central to keeping Rosa safe at home.",
+        rationale:
+          "<strong>Caregiver education, practical strategies, and connection to respite and resources</strong> are central here. Ignoring the daughter or pushing placement without assessment fails both of them.",
+        teach: "In dementia care, the caregiver's wellbeing directly shapes the client's safety and outcomes."
+      }
+    ]
+  },
+
+  {
+    id: "gbs-01",
+    title: "Guillain-Barre syndrome recovery",
+    area: "Neurological rehab",
+    blurb: "Uncommon · fatigue is the central caution",
+    difficulty: "Challenge",
+    domains: ["Intervention", "Evaluation"],
+    setting: "Acute rehabilitation",
+    patient: {
+      name: "Aisha, 38",
+      setting: "Acute rehab · recovering from Guillain-Barre syndrome",
+      summary:
+        "Aisha developed Guillain-Barre syndrome, spent time on a ventilator, and now has significant generalized weakness and profound fatigue as strength slowly returns. She's motivated but exhausts quickly, and how hard she works matters more than it would in most conditions."
+    },
+    steps: [
+      {
+        prompt: "What's a central OT consideration in Guillain-Barre recovery?",
+        hint: "Think about how her body responds to effort right now.",
+        type: "single",
+        options: [
+          { id: "a", text: "Avoiding overexertion and fatigue — use energy conservation and gently graded activity, since overwork can set recovery back" },
+          { id: "b", text: "Aggressive maximal-resistance strengthening to speed recovery" },
+          { id: "c", text: "Complete bed rest with no activity at all" },
+          { id: "d", text: "Ignoring her fatigue as unimportant" }
+        ],
+        correct: ["a"],
+        affirm: "Yes — protecting her from overwork is the guiding principle.",
+        coach: "In GBS, effort cuts both ways. Let's find the approach that respects that.",
+        rationale:
+          "In Guillain-Barre recovery, <strong>overexertion and fatigue can hinder progress</strong>, so energy conservation and carefully graded activity are key. Aggressive strengthening risks overwork, while total rest causes deconditioning and contractures.",
+        teach: "Unlike many conditions, 'push harder' is the wrong instinct here — pace and monitor fatigue."
+      },
+      {
+        prompt: "During the weak phase, which approaches are appropriate? Choose all that apply.",
+        hint: "You can select more than one.",
+        type: "multi",
+        options: [
+          { id: "a", text: "Positioning and gentle range of motion to prevent contractures" },
+          { id: "b", text: "Splinting or positioning to protect joints as needed" },
+          { id: "c", text: "Energy-conserving approaches to daily activities" },
+          { id: "d", text: "Forced, painful passive stretching" },
+          { id: "e", text: "High-intensity endurance training right now" }
+        ],
+        correct: ["a", "b", "c"],
+        affirm: "Well chosen — gentle, protective, and energy-aware.",
+        coach: "Let's keep what protects her joints and energy, and drop what overtaxes her.",
+        rationale:
+          "During profound weakness, <strong>positioning, gentle motion, protective splinting, and energy conservation</strong> prevent secondary problems without overworking her. Forced stretch and high-intensity training risk harm at this stage.",
+        teach: "Preventing contractures and conserving energy now sets up her later, active recovery."
+      },
+      {
+        prompt: "As her strength returns, how should activity progress?",
+        hint: "Let her body's response guide the pace.",
+        type: "single",
+        options: [
+          { id: "a", text: "Grade activity up gradually as tolerated, watching closely for fatigue" },
+          { id: "b", text: "Jump straight to full independence regardless of fatigue" },
+          { id: "c", text: "Keep activity minimal even as she clearly improves" },
+          { id: "d", text: "Base progression only on the calendar, not her response" }
+        ],
+        correct: ["a"],
+        affirm: "Right — gradual and guided by how she responds.",
+        coach: "Let's match the pace to her recovery, not a fixed schedule.",
+        rationale:
+          "Recovery calls for <strong>gradual grading with close attention to fatigue</strong>. Rushing risks overwork, holding her back wastes gains, and progressing by the calendar ignores her actual tolerance.",
+        teach: "Monitoring her response to activity is how you find the right, safe pace."
+      },
+      {
+        prompt: "Aisha is frightened by how weak she is and grieves her old life. What's the best response?",
+        hint: "Empathy first, then realistic hope and meaning.",
+        type: "single",
+        options: [
+          { id: "a", text: "Validate her feelings, offer realistic hope grounded in her progress, and re-engage her in meaningful, achievable activities" },
+          { id: "b", text: "Tell her not to worry about it" },
+          { id: "c", text: "Change the subject to avoid the discomfort" },
+          { id: "d", text: "Promise she'll be fully recovered very soon" }
+        ],
+        correct: ["a"],
+        affirm: "Yes — real empathy plus honest hope and meaning.",
+        coach: "This fear is understandable. Let's respond to it with care and truth.",
+        rationale:
+          "<strong>Validation, realistic hope, and meaningful activity</strong> support her through a frightening recovery. Dismissing, avoiding, or over-promising all undercut trust and coping.",
+        teach: "Many people with GBS recover substantially — honest, hopeful support helps her keep going."
+      }
+    ]
+  },
+
+  {
+    id: "burn-hand-01",
+    title: "Burn injury to the dominant hand",
+    area: "Hand & upper extremity",
+    blurb: "Uncommon · anti-deformity positioning and scar management",
+    difficulty: "Challenge",
+    domains: ["Intervention", "Evaluation"],
+    setting: "Acute care / burn unit",
+    patient: {
+      name: "Trevor, 41",
+      setting: "A few days after deep partial-thickness burns to the dominant right hand and forearm",
+      summary:
+        "Trevor sustained deep partial-thickness burns to his dominant right hand and forearm. He's a chef and anxious about his hand. Burn care is full of counterintuitive choices — the position that feels comfortable is exactly the one that leads to deformity."
+    },
+    steps: [
+      {
+        prompt: "To prevent contractures, how should the burned hand be positioned or splinted?",
+        hint: "Position against the deformity, not toward comfort.",
+        type: "single",
+        options: [
+          { id: "a", text: "In an anti-deformity (safe) position — wrist slightly extended, knuckles (MCPs) flexed, fingers (IPs) straight, thumb abducted" },
+          { id: "b", text: "In the position of comfort — wrist and fingers curled and flexed" },
+          { id: "c", text: "Fully flexed to keep it relaxed" },
+          { id: "d", text: "No positioning is needed for burns" }
+        ],
+        correct: ["a"],
+        affirm: "Yes — you positioned against the predictable deformity.",
+        coach: "Comfort is the trap here. Let's think about where contractures form.",
+        rationale:
+          "Burned hands are splinted in the <strong>anti-deformity 'safe' position</strong> (wrist extension, MCP flexion, IP extension, thumb abduction) because the comfortable, curled position is exactly where contractures develop.",
+        teach: "In burns, the 'position of comfort' becomes the 'position of contracture' — so you position opposite it."
+      },
+      {
+        prompt: "Which are appropriate early OT approaches for the burned hand? Choose all that apply.",
+        hint: "You can select more than one.",
+        type: "multi",
+        options: [
+          { id: "a", text: "Edema management with elevation and gentle motion" },
+          { id: "b", text: "Range of motion within tolerance and protocol to limit stiffness" },
+          { id: "c", text: "Scar management, with pressure garments as the burn heals" },
+          { id: "d", text: "Vigorous forced stretching through fragile, healing tissue" },
+          { id: "e", text: "Immobilizing it completely with no movement at all" }
+        ],
+        correct: ["a", "b", "c"],
+        affirm: "Great set — mobility and scar care without harming fragile tissue.",
+        coach: "Let's keep what protects motion and skin, and drop what damages healing tissue.",
+        rationale:
+          "Early burn-hand care includes <strong>edema control, protected range of motion, and scar management</strong>. Forced stretching can damage fragile tissue, and total immobilization invites stiffness and contracture.",
+        teach: "Balancing movement (to keep motion) with protection (of healing skin) is the core of burn rehab."
+      },
+      {
+        prompt: "Why is the 'position of comfort' avoided in burn care?",
+        hint: "Comfort now, cost later.",
+        type: "single",
+        options: [
+          { id: "a", text: "The comfortable, flexed position promotes contractures that limit future hand function" },
+          { id: "b", text: "Comfort is never a goal in therapy" },
+          { id: "c", text: "Burns require constant motion and never rest" },
+          { id: "d", text: "There's no real reason; comfort is fine here" }
+        ],
+        correct: ["a"],
+        affirm: "Right — comfort now can cost him hand function later.",
+        coach: "Let's connect the comfy position to what it becomes over time.",
+        rationale:
+          "The flexed <strong>position of comfort tightens into a contracture</strong> that limits function, which is why burn positioning deliberately opposes it.",
+        teach: "Anticipating the predictable deformity is what makes burn positioning make sense."
+      },
+      {
+        prompt: "Trevor is a chef and worried about his hand. What's the best OT approach?",
+        hint: "Work toward his role while protecting the tissue.",
+        type: "single",
+        options: [
+          { id: "a", text: "Grade activity toward hand function and his return to cooking while protecting healing tissue and managing scar" },
+          { id: "b", text: "Tell him he won't be able to cook again" },
+          { id: "c", text: "Have him return to full knife work immediately" },
+          { id: "d", text: "Avoid discussing his job to keep him calm" }
+        ],
+        correct: ["a"],
+        affirm: "Lovely — his goal drives the plan, safely.",
+        coach: "His work matters to him. Let's aim there while respecting the healing.",
+        rationale:
+          "<strong>Grading activity toward his valued role</strong> — cooking — while protecting tissue and managing scar keeps therapy meaningful and safe. Writing off his job or rushing him back both miss the mark.",
+        teach: "Tying rehab to his chef identity boosts motivation through a demanding recovery."
+      }
+    ]
   }
 
 ];

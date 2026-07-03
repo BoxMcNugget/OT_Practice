@@ -48,6 +48,7 @@ window.Praxis.modes = window.Praxis.modes || {};
         var pr = P.progress.cases[c.id];
         var done = pr && pr.done;
         var tags = c.domains.map(function (d) { return '<span class="tag">' + esc(d) + "</span>"; }).join("");
+        if (c.difficulty === "Challenge") tags = '<span class="tag challenge">Challenge</span>' + tags;
         if (done) tags = '<span class="tag done">' + P.icon("check", 13) + " completed</span>" + tags;
         var delay = (i++ * 0.05);
         return '<button class="case-card" data-id="' + c.id + '" style="animation-delay:' + delay + 's">' +

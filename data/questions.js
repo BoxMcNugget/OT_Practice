@@ -11,6 +11,23 @@ window.PRAXIS_QUESTIONS = [
 
   /* ---------- Evaluation & assessment ---------- */
   {
+    id: "q-eval-img-1", domain: "Evaluation & assessment", type: "single",
+    imageAlt: "A goniometer positioned at a joint, its two arms forming a right angle",
+    imageSvg: '<svg viewBox="0 0 210 130" width="210" height="130" role="img" aria-label="A goniometer positioned at a joint forming an angle to estimate"><line x1="32" y1="106" x2="192" y2="106" stroke="var(--ink-soft)" stroke-width="3" stroke-linecap="round"/><line x1="32" y1="106" x2="32" y2="20" stroke="var(--ink-soft)" stroke-width="3" stroke-linecap="round"/><path d="M32 74 A32 32 0 0 0 64 106" fill="none" stroke="var(--teal)" stroke-width="3"/><circle cx="32" cy="106" r="4.5" fill="var(--ink-soft)"/><text x="74" y="92" font-size="17" fill="var(--teal-dark)" font-weight="600">?</text></svg>',
+    prompt: "A therapist positions a goniometer at a client's elbow as shown. Approximately what angle is being measured?",
+    options: [
+      { id: "a", text: "About 90 degrees" },
+      { id: "b", text: "About 45 degrees" },
+      { id: "c", text: "About 135 degrees" },
+      { id: "d", text: "About 180 degrees (full extension)" }
+    ],
+    correct: ["a"],
+    affirm: "Yes — the two arms form a right angle, about 90 degrees.",
+    coach: "Picture the corner the two arms of the goniometer make.",
+    rationale: "The goniometer's arms form a <strong>right angle</strong>, so the joint is at about <strong>90 degrees</strong> of flexion. Reading goniometer angles accurately is a core evaluation skill.",
+    teach: "0 degrees is full extension (a straight line); a right angle is 90 degrees of flexion."
+  },
+  {
     id: "q-eval-1", domain: "Evaluation & assessment", type: "single",
     prompt: "What's the first step in the occupational therapy process with a new client?",
     options: [

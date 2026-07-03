@@ -269,8 +269,19 @@ body {
   background: rgba(255,255,255,.2);
   display: flex; align-items: center; justify-content: center;
 }
+.continue-kicker { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: rgba(255,255,255,.8); margin: 0 0 3px; }
 .continue-ttl { display: block; font-weight: 600; font-size: 16px; margin: 0 0 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .continue-sub { display: block; font-size: 13px; margin: 0; color: rgba(255,255,255,.85); }
+
+/* study plan */
+.plan-date { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+.plan-date label { font-size: 14px; color: var(--ink-soft); font-weight: 500; }
+.plan-date input { font: inherit; font-size: 14px; padding: 9px 12px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--card); color: var(--ink); min-height: 42px; }
+.plan-date input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-soft); }
+.plan-list { display: grid; gap: 8px; }
+.plan-row { display: flex; align-items: center; gap: 14px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
+.plan-day { flex-shrink: 0; width: 38px; font-weight: 600; font-size: 13px; color: var(--teal-dark); }
+.plan-task { font-size: 14px; color: var(--ink-soft); line-height: 1.4; }
 .continue .btn-solid { background: #fff; color: #0b7d5c; flex-shrink: 0; }
 .continue .btn-solid:hover { background: #f2fbf7; }
 
@@ -409,6 +420,7 @@ body {
   background: var(--line-soft); color: var(--muted);
 }
 .tag.done { background: var(--affirm-soft); color: var(--affirm); }
+.tag.challenge { background: var(--revisit-soft); color: var(--revisit); }
 .case-go { color: var(--faint); flex-shrink: 0; }
 
 /* ---------- case player ---------- */
@@ -492,6 +504,19 @@ body {
 .why-row.ok .why-ic { color: var(--affirm); }
 .why-row.no .why-ic { color: var(--faint); }
 .why-text strong { color: var(--ink); font-weight: 600; }
+
+/* confidence rating + metacognition */
+.conf { margin: 4px 0 20px; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.conf-label { font-size: 13.5px; color: var(--muted); }
+.conf-opts { display: inline-flex; gap: 8px; }
+.conf-chip { font: inherit; font-size: 13px; padding: 7px 12px; min-height: 36px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink-soft); cursor: pointer; transition: border-color .18s, background .18s, color .18s; }
+.conf-chip:hover { border-color: var(--teal-line); }
+.conf-chip.on { background: var(--teal-soft); border-color: var(--teal-line); color: var(--teal-dark); font-weight: 500; }
+.feedback-meta { margin: 10px 0 0; font-size: 13px; color: var(--ink-soft); display: flex; align-items: flex-start; gap: 6px; font-weight: 500; }
+.feedback-meta svg { flex-shrink: 0; margin-top: 2px; }
+.pace-note { font-size: 13px; color: var(--muted); margin: 12px 0 0; display: flex; align-items: center; gap: 6px; }
+.pace-note svg { color: var(--teal); flex-shrink: 0; }
+.focus-note.warn { background: var(--revisit-soft); border-color: var(--revisit-line); color: var(--revisit); margin-top: 12px; }
 
 .player-actions { display: flex; gap: 10px; }
 .player-actions .btn-solid { flex: 1; }
@@ -625,6 +650,32 @@ a.ring-wrap:hover .ring-fill { stroke: var(--teal-hover); }
 .exam-timer.low { color: var(--revisit); border-color: var(--revisit-line); background: var(--revisit-soft); }
 .exam-timer.low svg { color: var(--revisit); }
 .exam-count { flex-shrink: 0; font-size: 14px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.exam-subrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0 0; flex-wrap: wrap; }
+.exam-pos { font-size: 13px; color: var(--muted); font-weight: 500; }
+.exam-subrow-actions { display: flex; gap: 8px; }
+.exam-chip { font: inherit; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; min-height: 36px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink-soft); cursor: pointer; transition: border-color .18s, background .18s, color .18s; }
+.exam-chip:hover { border-color: var(--teal-line); }
+.exam-chip svg { flex-shrink: 0; }
+.exam-chip.on { background: var(--revisit-soft); border-color: var(--revisit-line); color: var(--revisit); font-weight: 500; }
+.exam-nav { display: flex; gap: 10px; }
+.exam-nav .btn-ghost, .exam-nav .btn-solid { flex: 1; }
+.exam-nav .btn-ghost[disabled] { opacity: .5; cursor: default; }
+
+.rev-legend { display: flex; gap: 16px; margin: 0 0 16px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
+.rev-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.rlg { width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); display: inline-block; }
+.rlg.answered { background: var(--teal); border-color: var(--teal); }
+.rlg.flagged { background: var(--revisit); border-color: var(--revisit); }
+.rev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 8px; }
+.rev-cell { position: relative; min-height: 46px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink-soft); font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; transition: border-color .18s, transform .12s, background .18s; }
+.rev-cell:hover { border-color: var(--teal-line); transform: translateY(-1px); }
+.rev-cell.answered { background: var(--teal-soft); border-color: var(--teal-line); color: var(--teal-dark); }
+.rev-cell.flagged::after { content: ""; position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; border-radius: 50%; background: var(--revisit); }
+
+/* image / diagram in a question */
+.q-figure { margin: 4px 0 14px; padding: 14px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); display: flex; justify-content: center; }
+.q-figure svg, .q-figure img { max-width: 100%; height: auto; }
 
 .score-ring { width: 132px; height: 132px; margin: 0 auto 16px; border-radius: 50%; border: 6px solid var(--revisit-line); background: var(--revisit-soft); display: flex; flex-direction: column; align-items: center; justify-content: center; animation: pop .6s cubic-bezier(.2,1.4,.4,1) both; }
 .score-ring.pass { border-color: var(--affirm-line); background: var(--affirm-soft); }
