@@ -150,6 +150,7 @@ window.Praxis.modes = window.Praxis.modes || {};
   /* -------- one question -------- */
   function renderQ(app, s) {
     app.innerHTML = "";
+    if (P.stopSpeaking) P.stopSpeaking();
     var q = s.pool[s.i];
     var view = document.createElement("div");
     view.className = "view";
@@ -170,6 +171,7 @@ window.Praxis.modes = window.Praxis.modes || {};
       '<p class="q-prompt">' + esc(q.prompt) + "</p>" +
       P.questionFigure(q) +
       '<p class="q-hint">' + P.icon("info", 15) + " " + selectLabel + "</p>" +
+      '<button class="listen-btn" id="listen-btn" style="margin:-4px 0 14px" aria-label="Listen to this question">' + P.icon("volume", 15) + " Listen</button>" +
       '<div class="options" id="opts">' + opts + "</div>" +
       '<div class="conf" id="conf">' +
         '<span class="conf-label">How sure are you?</span>' +
@@ -195,7 +197,11 @@ window.Praxis.modes = window.Praxis.modes || {};
     var startTime = Date.now();
     function refreshPrimary() { primary.disabled = !(selection.length && selectedConfidence); }
 
-    view.querySelector("#exit-btn").addEventListener("click", function () { P.go("#/"); });
+    view.querySelector("#exit-btn").addEventListener("click", function () { P.stopSpeaking(); P.go("#/"); });
+    var listen = view.querySelector("#listen-btn");
+    if (listen) listen.addEventListener("click", function () {
+      P.speak(q.prompt + ". " + q.options.map(function (o) { return o.text; }).join(". "));
+    });
 
     Array.prototype.forEach.call(optsWrap.querySelectorAll(".opt"), function (btn) {
       btn.addEventListener("click", function () {

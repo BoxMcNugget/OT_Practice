@@ -73,13 +73,15 @@ window.Praxis.modes = window.Praxis.modes || {};
 
   function renderCard(app, s, card) {
     app.innerHTML = "";
+    if (P.stopSpeaking) P.stopSpeaking();
     var view = document.createElement("div");
     view.className = "view";
     var doneCount = s.total - s.queue.length; // 1-based position of current
 
     view.innerHTML =
       P.subhead("Flashcards", card.category, "#/flashcards") +
-      '<p class="progress-text" style="margin-bottom:14px">Card ' + doneCount + " of " + s.total + "</p>" +
+      '<div class="fc-toprow"><span class="progress-text">Card ' + doneCount + " of " + s.total + "</span>" +
+        '<button class="listen-btn" id="fc-listen" aria-label="Listen to this card">' + P.icon("volume", 15) + " Listen</button></div>" +
       '<div class="flashcard-wrap"><div class="flashcard" id="card" tabindex="0" role="button" aria-label="Tap to flip the card">' +
         '<div class="fc-face fc-front">' +
           '<span class="fc-cat">' + esc(card.category) + "</span>" +
@@ -112,6 +114,9 @@ window.Praxis.modes = window.Praxis.modes || {};
     }
     cardEl.addEventListener("click", flip);
     cardEl.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(); } });
+
+    var listen = view.querySelector("#fc-listen");
+    if (listen) listen.addEventListener("click", function () { P.speak(flipped ? card.back : card.front); });
 
     if (!s.touched) { s.touched = true; P.touchStreak(); }
 

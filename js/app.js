@@ -73,7 +73,36 @@ window.Praxis = window.Praxis || {};
     chevUp: '<path d="M6 15l6-6 6 6"/>',
     pulse: '<path d="M3 12h4l2 6 4-14 2 8h6"/>',
     minus: '<path d="M6 12h12"/>',
-    flag: '<path d="M5 21V4"/><path d="M5 4h12l-2.5 4L17 12H5"/>'
+    flag: '<path d="M5 21V4"/><path d="M5 4h12l-2.5 4L17 12H5"/>',
+    flame: '<path d="M12 3c1.2 3 4 4.2 4 7.5a4 4 0 0 1-8 0c0-1.3.6-2.2 1.2-2.8C9 9.5 9 12 9 12S8.2 7.5 12 3z"/>',
+    award: '<circle cx="12" cy="9" r="6"/><path d="M9 14.5L8 21l4-2 4 2-1-6.5"/>',
+    volume: '<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 6a9 9 0 0 1 0 12"/>',
+    heart: '<path d="M12 20s-7-4.6-9.3-9A4.6 4.6 0 0 1 12 6a4.6 4.6 0 0 1 9.3 5c-2.3 4.4-9.3 9-9.3 9z"/>',
+    wind: '<path d="M3 8h11a3 3 0 1 0-3-3"/><path d="M3 12h15a3 3 0 1 1-3 3"/><path d="M3 16h9"/>'
+  };
+
+  // text-to-speech (hands-free study)
+  P.speak = function (text) {
+    try {
+      if (!("speechSynthesis" in window)) { P.toast("Audio isn't supported in this browser."); return; }
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.95;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  };
+  P.stopSpeaking = function () { try { if ("speechSynthesis" in window) window.speechSynthesis.cancel(); } catch (e) {} };
+
+  // text-size (accessibility comfort) — zoom on the content area, persisted
+  var FONT_SCALES = { sm: 0.92, md: 1, lg: 1.12, xl: 1.28 };
+  P.applyFontScale = function (key) {
+    if (!FONT_SCALES[key]) key = "md";
+    try { localStorage.setItem("praxis.fontScale", key); } catch (e) {}
+    var app = document.getElementById("app");
+    if (app) app.style.zoom = FONT_SCALES[key];
+  };
+  P.currentFontScale = function () {
+    try { return localStorage.getItem("praxis.fontScale") || "md"; } catch (e) { return "md"; }
   };
 
   // renders an optional image/diagram for a question (image path or inline SVG)
@@ -245,6 +274,45 @@ window.Praxis = window.Praxis || {};
     if (!s || !s.timeCount) return null;
     return Math.round(s.timeTotal / s.timeCount / 1000);
   };
+  P.recordMockScore = function (score, pct) {
+    var s = P.stats();
+    if (!s.mockScores) s.mockScores = [];
+    s.mockScores.push({ score: score, pct: pct, ts: Date.now() });
+    if (s.mockScores.length > 50) s.mockScores.shift();
+    P.save();
+  };
+  // accuracy grouped by the confidence she reported
+  P.confidenceStats = function () {
+    var s = P.progress.stats;
+    if (!s || !s.answered) return null;
+    var g = { low: { seen: 0, correct: 0 }, mid: { seen: 0, correct: 0 }, high: { seen: 0, correct: 0 } };
+    var any = false;
+    Object.keys(s.answered).forEach(function (id) {
+      var a = s.answered[id];
+      if (a.confidence && g[a.confidence]) { g[a.confidence].seen++; if (a.correct) g[a.confidence].correct++; any = true; }
+    });
+    return any ? g : null;
+  };
+  P.milestones = function () {
+    var s = P.progress.stats || {};
+    var streak = (P.progress.streak && P.progress.streak.count) || 0;
+    var casesDone = (window.PRAXIS_CASES || []).filter(function (c) { var p = P.progress.cases[c.id]; return p && p.done; }).length;
+    var sims = P.progress.sims ? Object.keys(P.progress.sims).length : 0;
+    var mocks = s.mockScores || [];
+    var bestMock = mocks.reduce(function (m, x) { return Math.max(m, x.score || 0); }, 0);
+    var bd = s.byDomain || {};
+    var doms = ["Evaluation & assessment", "Analysis & planning", "Intervention", "Competency & ethics"];
+    var allDomains70 = doms.every(function (d) { var x = bd[d]; return x && x.seen >= 3 && (x.correct / x.seen) >= 0.7; });
+    return [
+      { icon: "play", label: "First steps", desc: "Answer your first question", earned: (s.totalSeen || 0) >= 1 },
+      { icon: "flame", label: "Consistent", desc: "A 7-day study streak", earned: streak >= 7 },
+      { icon: "target", label: "Century", desc: "Answer 100 questions", earned: (s.totalSeen || 0) >= 100 },
+      { icon: "award", label: "Passed a mock", desc: "Score 450+ on a mock exam", earned: bestMock >= 450 },
+      { icon: "chart", label: "Well-rounded", desc: "All four domains at 70%+", earned: allDomains70 },
+      { icon: "pulse", label: "Simulation-ready", desc: "Finish 2 clinical simulations", earned: sims >= 2 },
+      { icon: "userHeart", label: "Case worker", desc: "Complete 5 patient cases", earned: casesDone >= 5 }
+    ];
+  };
   P.examDate = function () { return P.progress.examDate || P.CONFIG.examDateISO || null; };
   P.daysToExam = function () {
     var iso = P.examDate();
@@ -333,6 +401,8 @@ window.Praxis = window.Praxis || {};
       renderProgress(app);
     } else if (parts[0] === "plan") {
       renderPlan(app);
+    } else if (parts[0] === "calm") {
+      renderCalm(app);
     } else if (parts[0] === "exam") {
       P.modes.exam.render(app);
     } else if (parts[0] === "sims" && parts[1]) {
@@ -443,6 +513,7 @@ window.Praxis = window.Praxis || {};
       '<p class="foot-note">' + footNote() +
         ' · <a href="#/plan">Plan</a>' +
         ' · <a href="#/progress">Progress</a>' +
+        ' · <a href="#/calm">Calm</a>' +
         ' · <a href="#/sources">Sources</a>' +
         ' · <a href="#" id="about-content">about the content</a></p>';
 
@@ -543,6 +614,70 @@ window.Praxis = window.Praxis || {};
     return "About " + sec + "s per question — worth practicing a bit quicker; the exam allows roughly 80s each.";
   }
 
+  // self-drawn line chart of mock scaled scores over time, with the 450 pass line
+  function mockChartSVG(scores) {
+    var W = 320, H = 150, padL = 8, padR = 8, padT = 14, padB = 14;
+    var yMin = 250, yMax = 600, n = scores.length;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    function xy(i, v) {
+      var x = padL + (n === 1 ? plotW / 2 : (i / (n - 1)) * plotW);
+      var y = padT + (1 - (v - yMin) / (yMax - yMin)) * plotH;
+      return [x, y];
+    }
+    var y450 = padT + (1 - (450 - yMin) / (yMax - yMin)) * plotH;
+    var pts = scores.map(function (sc, i) { return xy(i, Math.max(yMin, Math.min(yMax, sc.score))); });
+    var line = pts.map(function (p, i) { return (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(" ");
+    var dots = pts.map(function (p) { return '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3.5" fill="var(--teal)"/>'; }).join("");
+    return '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" role="img" aria-label="Your mock exam scaled scores over time">' +
+      '<line x1="' + padL + '" y1="' + y450.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y450.toFixed(1) + '" stroke="var(--revisit)" stroke-width="1.5" stroke-dasharray="4 4"/>' +
+      '<text x="' + (W - padR) + '" y="' + (y450 - 5).toFixed(1) + '" text-anchor="end" font-size="11" fill="var(--revisit)">pass 450</text>' +
+      '<path d="' + line + '" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+      dots + "</svg>";
+  }
+  function calibMsg(cs) {
+    var h = cs.high;
+    if (h.seen >= 3 && (h.correct / h.seen) < 0.6)
+      return "When you feel sure, it's worth a second look — a few confident answers are slipping. Totally normal, and good to notice.";
+    if (h.seen >= 3 && (h.correct / h.seen) >= 0.85)
+      return "Your confidence lines up well with your accuracy — that's a great sign of solid knowledge.";
+    return "Keep rating your confidence — over time this shows where your instincts are reliable.";
+  }
+  function milestonesHTML() {
+    var badges = P.milestones();
+    var earned = badges.filter(function (b) { return b.earned; }).length;
+    return '<p class="pills-label" style="margin-top:24px">Milestones · ' + earned + " of " + badges.length + "</p>" +
+      '<div class="badge-grid">' + badges.map(function (b) {
+        return '<div class="badge' + (b.earned ? " earned" : "") + '">' +
+          '<span class="badge-ic">' + P.icon(b.icon, 20) + "</span>" +
+          '<span class="badge-ttl">' + esc(b.label) + "</span>" +
+          '<span class="badge-desc">' + esc(b.desc) + "</span></div>";
+      }).join("") + "</div>";
+  }
+  function mockChartHTML() {
+    var mocks = (P.progress.stats && P.progress.stats.mockScores) || [];
+    if (!mocks.length) return "";
+    var last = mocks[mocks.length - 1];
+    return '<p class="pills-label" style="margin-top:24px">Mock exam scores</p>' +
+      '<div class="chart-card">' + mockChartSVG(mocks) + "</div>" +
+      '<p class="pace-note">' + P.icon("target", 14) + " Latest estimate: <strong style=\"color:var(--ink)\">" + last.score +
+      "</strong> (" + (last.score >= 450 ? "above" : "below") + " the 450 pass line).</p>";
+  }
+  function calibHTML() {
+    var cs = P.confidenceStats();
+    if (!cs) return "";
+    var order = [["high", "Confident"], ["mid", "Fairly sure"], ["low", "Not sure"]];
+    var rows = order.map(function (o) {
+      var g = cs[o[0]]; if (!g.seen) return "";
+      var acc = Math.round(100 * g.correct / g.seen);
+      return '<div class="calib-row"><div class="calib-top"><span>' + o[1] + '</span><span class="dom-pct">' + acc + "%</span></div>" +
+        '<div class="dom-bar"><div class="dom-fill" style="width:' + acc + '%"></div></div>' +
+        '<div class="dom-sub">right on ' + g.correct + " of " + g.seen + "</div></div>";
+    }).join("");
+    return '<p class="pills-label" style="margin-top:24px">Confidence check</p>' +
+      '<div class="calib">' + rows + "</div>" +
+      '<p class="pace-note">' + P.icon("bulb", 14) + " " + esc(calibMsg(cs)) + "</p>";
+  }
+
   function renderProgress(app) {
     var s = P.progress.stats;
     var view = document.createElement("div");
@@ -609,6 +744,9 @@ window.Praxis = window.Praxis || {};
         P.icon("bulb", 18) + " Review " + confWrong + " confident mistake" + (confWrong === 1 ? "" : "s") + "</button>" : "") +
       (missed ? '<button class="btn-ghost block-btn" id="review-missed" style="margin-top:10px">' +
         P.icon("refresh", 18) + " Review " + missed + " missed question" + (missed === 1 ? "" : "s") + "</button>" : "") +
+      milestonesHTML() +
+      mockChartHTML() +
+      calibHTML() +
       '<p class="mode-foot">' + P.icon("info", 14) + " Accuracy reflects your most recent answer on each question.</p>";
 
     app.appendChild(view);
@@ -687,6 +825,97 @@ window.Praxis = window.Praxis || {};
       app.innerHTML = "";
       renderPlan(app);
     });
+  }
+
+  /* ---- calm & confidence (wellbeing) page ---- */
+  var CHECKLIST = [
+    "Get a good night's sleep beforehand",
+    "Eat a solid breakfast",
+    "Bring your ID and confirmation",
+    "Know the test-center location and travel time",
+    "Plan to arrive early",
+    "Bring water and a snack for the break",
+    "Take slow breaths if nerves rise"
+  ];
+  var TIPS = [
+    "A little anxiety is normal — it means you care. Slow breathing tells your body you're safe.",
+    "You don't need every question right. Aim for steady, not perfect.",
+    "If a question stumps you, flag it and move on — momentum matters.",
+    "You've prepared for this. Trust the work you've put in."
+  ];
+
+  function checklistHTML() {
+    var state = P.progress.checklist || {};
+    return CHECKLIST.map(function (t, i) {
+      return '<button class="check-item' + (state[i] ? " on" : "") + '" data-i="' + i + '" aria-pressed="' + (state[i] ? "true" : "false") + '">' +
+        '<span class="check-box">' + P.icon("check", 14) + "</span><span>" + esc(t) + "</span></button>";
+    }).join("");
+  }
+  function tipsHTML() {
+    return TIPS.map(function (t) { return '<div class="tip-card">' + P.icon("heart", 16) + "<span>" + esc(t) + "</span></div>"; }).join("");
+  }
+
+  function renderCalm(app) {
+    var view = document.createElement("div");
+    view.className = "view";
+    var cur = P.currentFontScale();
+    var sizes = [["sm", "Small"], ["md", "Default"], ["lg", "Large"], ["xl", "Extra"]];
+    var sizeBtns = sizes.map(function (x) { return '<button class="size-btn' + (x[0] === cur ? " on" : "") + '" data-sz="' + x[0] + '">A</button>'; }).join("");
+
+    view.innerHTML =
+      P.subhead("Calm & confidence", "Steady your nerves and take care of yourself", "#/") +
+      '<p class="pills-label">Text size</p>' +
+      '<div class="size-row" id="size-row" role="group" aria-label="Text size">' + sizeBtns + "</div>" +
+      '<p class="pills-label" style="margin-top:24px">Box breathing</p>' +
+      '<div class="breathe-card">' +
+        '<div class="breathe-stage"><div class="breathe-circle" id="breathe-circle"><span id="breathe-label">Ready?</span></div></div>' +
+        '<button class="btn-solid" id="breathe-btn">' + P.icon("wind", 18) + " Start breathing</button>" +
+        '<p class="breathe-hint">Breathe in for 4, hold for 4, out for 4, hold for 4. A minute or two settles the nervous system.</p>' +
+      "</div>" +
+      '<p class="pills-label" style="margin-top:24px">Exam-day checklist</p>' +
+      '<div class="checklist" id="checklist">' + checklistHTML() + "</div>" +
+      '<p class="pills-label" style="margin-top:24px">A few reminders</p>' +
+      '<div class="tips">' + tipsHTML() + "</div>";
+
+    app.appendChild(view);
+    P.wireBack(view);
+
+    Array.prototype.forEach.call(view.querySelectorAll(".size-btn"), function (b) {
+      b.addEventListener("click", function () {
+        P.applyFontScale(b.getAttribute("data-sz"));
+        Array.prototype.forEach.call(view.querySelectorAll(".size-btn"), function (x) { x.classList.toggle("on", x === b); });
+      });
+    });
+    Array.prototype.forEach.call(view.querySelectorAll(".check-item"), function (b) {
+      b.addEventListener("click", function () {
+        if (!P.progress.checklist) P.progress.checklist = {};
+        var i = b.getAttribute("data-i");
+        if (P.progress.checklist[i]) delete P.progress.checklist[i]; else P.progress.checklist[i] = true;
+        var on = !!P.progress.checklist[i];
+        b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false");
+        P.save();
+      });
+    });
+    wireBreathing(view);
+  }
+
+  function wireBreathing(view) {
+    var btn = view.querySelector("#breathe-btn");
+    var circle = view.querySelector("#breathe-circle");
+    var label = view.querySelector("#breathe-label");
+    var running = false, timer = null, pi = 0;
+    var phases = [["Breathe in", "add", 4000], ["Hold", "none", 4000], ["Breathe out", "remove", 4000], ["Hold", "none", 4000]];
+    function step() {
+      var p = phases[pi];
+      label.textContent = p[0];
+      if (p[1] === "add") circle.classList.add("expanded");
+      else if (p[1] === "remove") circle.classList.remove("expanded");
+      pi = (pi + 1) % phases.length;
+      timer = setTimeout(step, p[2]);
+    }
+    function start() { running = true; pi = 0; btn.innerHTML = P.icon("x", 18) + " Stop"; step(); }
+    function stop() { running = false; clearTimeout(timer); circle.classList.remove("expanded"); label.textContent = "Ready?"; btn.innerHTML = P.icon("wind", 18) + " Start breathing"; }
+    btn.addEventListener("click", function () { running ? stop() : start(); });
   }
 
   /* ---- sources page ---- */
@@ -790,6 +1019,13 @@ window.Praxis = window.Praxis || {};
   window.addEventListener("hashchange", route);
   document.addEventListener("DOMContentLoaded", function () {
     setupTheme();
+    P.applyFontScale(P.currentFontScale());
+    var skip = document.getElementById("skip-link");
+    if (skip) skip.addEventListener("click", function (e) {
+      e.preventDefault();
+      var a = document.getElementById("app");
+      if (a) { a.focus(); a.scrollIntoView(); }
+    });
     paintStreak();
     route();
   });

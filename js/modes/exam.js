@@ -309,6 +309,7 @@ window.Praxis.modes = window.Praxis.modes || {};
     var pct = total ? Math.round(100 * correct / total) : 0;
     var scaled = scaledScore(total ? (correct / total * 100) : 0);
     var passed = scaled >= 450;
+    P.recordMockScore(scaled, pct);
     var timeUsed = Math.min(s.durationMs, Date.now() - s.startTs);
 
     var bars = DOMAINS.map(function (d) {
